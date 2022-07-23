@@ -1,4 +1,4 @@
-<img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH Logo" width="120" height="120" style="opacity: 0.7;"> 
+<img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH Logo" width="300" height="300" style="opacity: 0.7;"> 
 
 # Download Link
 
