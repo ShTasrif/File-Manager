@@ -1,5 +1,9 @@
 import os, sys, time
 from time import sleep
+from datetime import date
+
+today = date.today()
+
 rst="\033[0m"
 b="\033[1;30m"
 r="\033[1;31m"
@@ -27,15 +31,17 @@ def logo ():
       ░░░╚═╝░░░╚═╝░░╚═╝╚═════╝░╚═╝░░╚═╝╚═╝╚═╝░░░░░                                        
 -------------------------------------------------------
    ╔═══════════════════════════════════════════════╗
-   ║       [✓] TOOL NAME : TERMUX HONE             ║
+   ║       [✓] TOOL NAME : TERMUX HOME             ║ 
+   ║       [✓] YOUTUBE : CYBER SH                  ║
    ║       [✓] GITHUB : SH TASRIF                  ║
    ║       [✓] FACEBOOK : H.CYBERSH                ║
    ║       [✓] TELEGRAM : TASRIF_HOSSEN_SHUVO      ║
    ║       [✓] INSTAGRAM : TASRIF.HOSSEN.SHUVO     ║
    ║       [✓] EMAIL : CYBERSHBD@GMAIL.COM         ║
-   ╚═════════════════════════════════════════════6══╝\n--------------------------------------------------------'|lolcat""")
+   ╚═══════════════════════════════════════════════╝\n--------------------------------------------------------'|lolcat""")
   #your slogan
   ani(r+"\t<"+bl+"p"+r+">"+g+" ALWAYS ALLAH IS WATCHING ME :) "+r+"<"+bl+"/p"+r+">")
+#  print(today.strftime("%b-%d-%Y"))
   #welcome voice
  # os.system("termux-tts-speak Welcome SH TASRIF ")
   os.system("echo '--------------------------------------------------------\n'| lolcat")
