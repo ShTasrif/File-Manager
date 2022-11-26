@@ -26,3 +26,5 @@ shurl
 </div>
 
 # Screenshot:
+![ezgif-1-35c884a709](https://user-images.githubusercontent.com/85736436/204098295-61b69bc9-8e6b-470a-a6cd-785537a4b00f.gif)
+
