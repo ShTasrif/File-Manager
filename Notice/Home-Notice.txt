@@ -8,3 +8,4 @@
               🔰 Customized UI 🔰
               🔰 Adding Surveillance 🔰
               🔰 Add SMS Bombing API 🔰
+              🔰 Added No Internet Notice 🔰
