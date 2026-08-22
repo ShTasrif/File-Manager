@@ -13,37 +13,55 @@
     let lastMapMeta = null;
     let capturedAuthToken = "";
 
-    // 1. Inject Floating Circular Avatar (Minimized State with draggable support)
+    // Generate or retrieve a persistent Device ID for the browser
+    let deviceId = localStorage.getItem('cybersh_device_id');
+    if (!deviceId) {
+        deviceId = 'CSH-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
+        localStorage.setItem('cybersh_device_id', deviceId);
+    }
+
+    // 1. Inject Floating Circular Avatar (Minimized State)
     const avatarHtml = `
-    <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
+    <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 8px 20px rgba(0,0,0,0.6); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 2. Inject Main Professional UI Overlay
+    // 2. Inject Professional UI Overlay with Device ID & Copy Action
     const overlayHtml = `
-    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 420px; max-height: 60vh; background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 16px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.3); backdrop-filter: blur(12px);">
+    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 65vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
         <!-- Header / Drag Handle -->
-        <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.8); padding-bottom: 10px; margin-bottom: 10px; cursor: grab;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 16px;">🛡️</span>
+        <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.6); padding-bottom: 10px; margin-bottom: 10px; cursor: grab;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: rgba(56, 189, 248, 0.1); padding: 6px; border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.2);">
+                    <span style="font-size: 16px;">🛡️</span>
+                </div>
                 <div>
-                    <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Background Active v2.4</div>
+                    <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
+                    <div style="font-size: 9px; color: #94a3b8;">Secure Enterprise v2.5</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
                 <button id="cybersh-btn-support" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none;">Support</button>
-                <button id="cybersh-btn-minimize" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Minimize to Avatar">✕</button>
+                <button id="cybersh-btn-minimize" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Minimize">✕</button>
             </div>
         </div>
 
+        <!-- Device ID Card -->
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
+                <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Device ID</div>
+                <span id="cybersh-device-id-text" style="font-family: monospace; color: #38bdf8; font-size: 11px; font-weight: bold;">${deviceId}</span>
+            </div>
+            <button id="cybersh-btn-copy-id" style="background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Copy ID</button>
+        </div>
+
         <!-- Log Terminal Window -->
-        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; max-height: 35vh; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.6); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
+        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; max-height: 30vh; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.75); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
 
         <!-- Action Footer -->
         <div style="margin-top: 10px; display: flex; gap: 8px;">
-            <button id="cybersh-btn-download" style="flex: 1; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);">Download Last Map</button>
+            <button id="cybersh-btn-download" style="flex: 1; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 9px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4);">Download Last Map</button>
         </div>
     </div>`;
 
@@ -62,11 +80,27 @@
         console.log(`[CyberSH] ${msg}`);
     }
 
+    // Copy Device ID Handler
+    document.getElementById('cybersh-btn-copy-id').onclick = () => {
+        navigator.clipboard.writeText(deviceId).then(() => {
+            const copyBtn = document.getElementById('cybersh-btn-copy-id');
+            copyBtn.innerText = "Copied!";
+            copyBtn.style.background = "#16a34a";
+            setTimeout(() => {
+                copyBtn.innerText = "Copy ID";
+                copyBtn.style.background = "#0284c7";
+            }, 2000);
+            log("Device ID copied to clipboard.", "success");
+        }).catch(err => {
+            log("Failed to copy Device ID", "error");
+        });
+    };
+
     // Minimize to Avatar
     document.getElementById('cybersh-btn-minimize').onclick = () => {
         overlay.style.display = 'none';
         avatar.style.display = 'block';
-        log("Minimized to background avatar. Script is still active.");
+        log("Minimized to background avatar. Script active.");
     };
 
     // Support Link Action
@@ -157,7 +191,6 @@
         avatarDragging = false;
     }
 
-    // Restore on Tap/Click (only if it wasn't dragged across the screen)
     avatar.onclick = () => {
         if (!hasMoved) {
             avatar.style.display = 'none';
@@ -165,7 +198,7 @@
         }
     };
 
-    log("CyberSH Mouza Tool Initialized & Running in Background.");
+    log(`CyberSH Tool Initialized. Device ID: ${deviceId}`);
 
     // XHR & Fetch Interceptors for Background Execution
     const XHR = window.XMLHttpRequest;
@@ -212,7 +245,7 @@
 
     async function triggerDownload(mapId, record) {
         const imageUrl = `https://gateway.dlrms.land.gov.bd/core-api/api/public/maps/image-view-file/${mapId}`;
-        log(`Processing image download for ID ${mapId}...`, "info");
+        log(`Processing download for ID ${mapId}...`, "info");
 
         if (!capturedAuthToken) {
             for (let i = 0; i < localStorage.length; i++) {
@@ -240,7 +273,6 @@
             const imgRes = await fetch(imageUrl, { headers: headers });
             if (!imgRes.ok) throw new Error(`HTTP error status: ${imgRes.status}`);
 
-            // Try to extract selected Mouza name from dropdown UI if available, else use record ID/Sheet
             let mouzaName = "mouza";
             const selectElement = document.querySelector('ng-select[placeholder*="মৌজা"] .ng-value-label, .ng-value-label');
             if (selectElement && selectElement.innerText) {
@@ -261,7 +293,7 @@
             document.body.removeChild(a);
             window.URL.revokeObjectURL(blobUrl);
 
-            log(`Downloaded successfully as: ${fileName}`, "success");
+            log(`Downloaded: ${fileName}`, "success");
         } catch (err) {
             log(`Download error: ${err.message}`, "error");
         }
