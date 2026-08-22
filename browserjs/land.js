@@ -1,5 +1,5 @@
 (async function() {
-    // If the floating avatar already exists, just make sure the panel opens back up
+    // If elements already exist, restore the panel or show avatar
     const existingAvatar = document.getElementById('cybersh-floating-avatar');
     const existingOverlay = document.getElementById('cybersh-logger-overlay');
     
@@ -10,12 +10,13 @@
     }
 
     let lastCapturedMapId = null;
+    let lastMapMeta = null;
     let capturedAuthToken = "";
 
-    // 1. Inject Floating Circular Avatar (Minimized State)
+    // 1. Inject Floating Circular Avatar (Minimized State with draggable support)
     const avatarHtml = `
-    <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; transition: transform 0.2s ease;">
-        <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover;" />
+    <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
+        <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
     // 2. Inject Main Professional UI Overlay
@@ -28,7 +29,7 @@
                 <span style="font-size: 16px;">🛡️</span>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Background Active v2.2</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Background Active v2.4</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -68,19 +69,13 @@
         log("Minimized to background avatar. Script is still active.");
     };
 
-    // Restore on Avatar Click
-    avatar.onclick = () => {
-        avatar.style.display = 'none';
-        overlay.style.display = 'flex';
-    };
-
     // Support Link Action
     document.getElementById('cybersh-btn-support').onclick = (e) => {
         e.preventDefault();
         window.open('https://t.me/cybersh_official', '_blank');
     };
 
-    // Make Panel Draggable (Touch & Mouse Support)
+    // Make Main Panel Draggable (Touch & Mouse Support)
     const header = document.getElementById('cybersh-drag-handle');
     let isDragging = false, startX, startY, initialX, initialY;
 
@@ -116,6 +111,59 @@
     function dragEnd() {
         isDragging = false;
     }
+
+    // Make Minimized Avatar Draggable & Clickable to Restore
+    let avatarDragging = false;
+    let avatarStartX, avatarStartY, avatarInitialX, avatarInitialY;
+    let hasMoved = false;
+
+    avatar.addEventListener('mousedown', avatarDragStart);
+    avatar.addEventListener('touchstart', avatarDragStart, {passive: true});
+    document.addEventListener('mousemove', avatarDrag);
+    document.addEventListener('touchmove', avatarDrag, {passive: true});
+    document.addEventListener('mouseup', avatarDragEnd);
+    document.addEventListener('touchend', avatarDragEnd);
+
+    function avatarDragStart(e) {
+        avatarDragging = true;
+        hasMoved = false;
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        avatarStartX = clientX;
+        avatarStartY = clientY;
+        const rect = avatar.getBoundingClientRect();
+        avatarInitialX = rect.left;
+        avatarInitialY = rect.top;
+        avatar.style.bottom = 'auto';
+        avatar.style.right = 'auto';
+    }
+
+    function avatarDrag(e) {
+        if (!avatarDragging) return;
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        const dx = clientX - avatarStartX;
+        const dy = clientY - avatarStartY;
+        
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            hasMoved = true;
+        }
+
+        avatar.style.left = `${avatarInitialX + dx}px`;
+        avatar.style.top = `${avatarInitialY + dy}px`;
+    }
+
+    function avatarDragEnd() {
+        avatarDragging = false;
+    }
+
+    // Restore on Tap/Click (only if it wasn't dragged across the screen)
+    avatar.onclick = () => {
+        if (!hasMoved) {
+            avatar.style.display = 'none';
+            overlay.style.display = 'flex';
+        }
+    };
 
     log("CyberSH Mouza Tool Initialized & Running in Background.");
 
@@ -156,12 +204,13 @@
         if (json && json.success && json.data && json.data.length > 0) {
             const record = json.data[0];
             lastCapturedMapId = record.ID;
+            lastMapMeta = record;
             log(`Target Map ID found: ${lastCapturedMapId} (Sheet: ${record.SHEET_NO})`, "success");
-            triggerDownload(lastCapturedMapId);
+            triggerDownload(lastCapturedMapId, record);
         }
     }
 
-    async function triggerDownload(mapId) {
+    async function triggerDownload(mapId, record) {
         const imageUrl = `https://gateway.dlrms.land.gov.bd/core-api/api/public/maps/image-view-file/${mapId}`;
         log(`Processing image download for ID ${mapId}...`, "info");
 
@@ -191,18 +240,28 @@
             const imgRes = await fetch(imageUrl, { headers: headers });
             if (!imgRes.ok) throw new Error(`HTTP error status: ${imgRes.status}`);
 
+            // Try to extract selected Mouza name from dropdown UI if available, else use record ID/Sheet
+            let mouzaName = "mouza";
+            const selectElement = document.querySelector('ng-select[placeholder*="মৌজা"] .ng-value-label, .ng-value-label');
+            if (selectElement && selectElement.innerText) {
+                mouzaName = selectElement.innerText.trim().replace(/[^a-zA-Z0-9_\u0980-\u09FF]/g, '_');
+            }
+
+            const sheetNo = record && record.SHEET_NO ? record.SHEET_NO : '1';
+            const fileName = `CyberSH_${mouzaName}_sit_${sheetNo}.jpg`;
+
             const blob = await imgRes.blob();
             const blobUrl = window.URL.createObjectURL(blob);
             
             const a = document.createElement('a');
             a.href = blobUrl;
-            a.download = `CyberSH_Map_${mapId}.jpg`;
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(blobUrl);
 
-            log("Map image downloaded successfully!", "success");
+            log(`Downloaded successfully as: ${fileName}`, "success");
         } catch (err) {
             log(`Download error: ${err.message}`, "error");
         }
@@ -210,7 +269,7 @@
 
     document.getElementById('cybersh-btn-download').onclick = () => {
         if (lastCapturedMapId) {
-            triggerDownload(lastCapturedMapId);
+            triggerDownload(lastCapturedMapId, lastMapMeta);
         } else {
             log("No Map ID available. Perform search first.", "error");
         }
