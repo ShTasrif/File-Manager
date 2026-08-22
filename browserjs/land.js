@@ -350,24 +350,45 @@
             const imgRes = await fetch(imageUrl, { headers: headers });
             if (!imgRes.ok) throw new Error(`HTTP error status: ${imgRes.status}`);
 
-            // Fixed: Pulls all text or label parts inside the selected ng-select dropdown for Mouza dynamically
+            // Robust multi-strategy Mouza picker targeting ng-select text value containers
             let mouzaName = "mouza";
-            const ngSelectContainer = document.querySelector('ng-select');
-            if (ngSelectContainer) {
-                const valueLabels = ngSelectContainer.querySelectorAll('.ng-value-label');
-                let parts = [];
-                valueLabels.forEach(el => {
-                    if (el.innerText.trim()) parts.push(el.innerText.trim());
-                });
-                if (parts.length > 0) {
-                    mouzaName = parts.join('_');
-                } else if (ngSelectContainer.innerText) {
-                    mouzaName = ngSelectContainer.innerText.trim().split('\n')[0];
+            const allNgSelects = document.querySelectorAll('ng-select');
+            
+            for (let sel of allNgSelects) {
+                // Check if this ng-select contains the placeholder text or label corresponding to Mouza
+                const placeholder = sel.getAttribute('placeholder') || "";
+                const textContent = sel.innerText || "";
+                
+                if (placeholder.includes("মৌজা") || textContent.includes("-") || sel.querySelector('.ng-value-label')) {
+                    // Extract text parts inside value wrapper labels
+                    const labels = sel.querySelectorAll('.ng-value-label, .ng-value');
+                    let collected = [];
+                    labels.forEach(lbl => {
+                        let cleanText = lbl.innerText.trim();
+                        if (cleanText) collected.push(cleanText);
+                    });
+                    
+                    if (collected.length > 0) {
+                        mouzaName = collected.join('_');
+                        break;
+                    } else if (sel.innerText.trim() && !sel.innerText.includes("মৌজা")) {
+                        mouzaName = sel.innerText.trim().split('\n')[0];
+                        break;
+                    }
                 }
             }
 
-            // Cleanup filename format safely
+            // Fallback: If still default, query any element containing the hyphenated code/name combo visible on screen
+            if (mouzaName === "mouza") {
+                const fallbackElement = document.querySelector('.ng-value-container');
+                if (fallbackElement && fallbackElement.innerText.trim()) {
+                    mouzaName = fallbackElement.innerText.trim();
+                }
+            }
+
+            // Cleanup filename format safely to handle Bengali characters, numbers, and underscores
             mouzaName = mouzaName.replace(/[\s\-]+/g, '_').replace(/[^a-zA-Z0-9_\u0980-\u09FF]/g, '');
+            if (!mouzaName) mouzaName = "mouza";
 
             const sheetNo = record && record.SHEET_NO ? record.SHEET_NO : '1';
             const fileName = `CyberSH_${mouzaName}_sit_${sheetNo}.jpg`;
