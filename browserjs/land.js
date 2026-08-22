@@ -1,13 +1,24 @@
 (async function() {
-    if (document.getElementById('cybersh-logger-overlay')) {
-        document.getElementById('cybersh-logger-overlay').style.display = 'flex';
+    // If the floating avatar already exists, just make sure the panel opens back up
+    const existingAvatar = document.getElementById('cybersh-floating-avatar');
+    const existingOverlay = document.getElementById('cybersh-logger-overlay');
+    
+    if (existingAvatar && existingOverlay) {
+        existingOverlay.style.display = 'flex';
+        existingAvatar.style.display = 'none';
         return;
     }
 
     let lastCapturedMapId = null;
     let capturedAuthToken = "";
 
-    // Professional UI/UX Template with Drag support
+    // 1. Inject Floating Circular Avatar (Minimized State)
+    const avatarHtml = `
+    <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; transition: transform 0.2s ease;">
+        <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover;" />
+    </div>`;
+
+    // 2. Inject Main Professional UI Overlay
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 420px; max-height: 60vh; background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 16px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.3); backdrop-filter: blur(12px);">
         
@@ -17,12 +28,12 @@
                 <span style="font-size: 16px;">🛡️</span>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Automated Downloader v2.1</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Background Active v2.2</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
                 <button id="cybersh-btn-support" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none;">Support</button>
-                <button id="cybersh-btn-close" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer;">✕</button>
+                <button id="cybersh-btn-minimize" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Minimize to Avatar">✕</button>
             </div>
         </div>
 
@@ -35,11 +46,14 @@
         </div>
     </div>`;
 
-    const div = document.createElement('div');
-    div.innerHTML = overlayHtml;
-    document.body.appendChild(div);
+    const container = document.createElement('div');
+    container.innerHTML = overlayHtml + avatarHtml;
+    document.body.appendChild(container);
 
+    const overlay = document.getElementById('cybersh-logger-overlay');
+    const avatar = document.getElementById('cybersh-floating-avatar');
     const logContent = document.getElementById('cybersh-log-content');
+
     function log(msg, type = 'info') {
         const color = type === 'error' ? '#f87171' : type === 'success' ? '#4ade80' : '#cbd5e1';
         logContent.innerHTML += `<div style="color: ${color}; margin-bottom: 4px;">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
@@ -47,19 +61,26 @@
         console.log(`[CyberSH] ${msg}`);
     }
 
+    // Minimize to Avatar
+    document.getElementById('cybersh-btn-minimize').onclick = () => {
+        overlay.style.display = 'none';
+        avatar.style.display = 'block';
+        log("Minimized to background avatar. Script is still active.");
+    };
+
+    // Restore on Avatar Click
+    avatar.onclick = () => {
+        avatar.style.display = 'none';
+        overlay.style.display = 'flex';
+    };
+
     // Support Link Action
     document.getElementById('cybersh-btn-support').onclick = (e) => {
         e.preventDefault();
         window.open('https://t.me/cybersh_official', '_blank');
     };
 
-    // Close Button Action
-    document.getElementById('cybersh-btn-close').onclick = () => {
-        document.getElementById('cybersh-logger-overlay').remove();
-    };
-
     // Make Panel Draggable (Touch & Mouse Support)
-    const overlay = document.getElementById('cybersh-logger-overlay');
     const header = document.getElementById('cybersh-drag-handle');
     let isDragging = false, startX, startY, initialX, initialY;
 
@@ -96,9 +117,9 @@
         isDragging = false;
     }
 
-    log("CyberSH Mouza Tool Initialized successfully.");
+    log("CyberSH Mouza Tool Initialized & Running in Background.");
 
-    // XHR & Fetch Interceptors for Token and Data Extraction
+    // XHR & Fetch Interceptors for Background Execution
     const XHR = window.XMLHttpRequest;
     function customXHR() {
         const xhr = new XHR();
