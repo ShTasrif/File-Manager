@@ -58,13 +58,13 @@
 
     const deviceId = await getPermanentDeviceId();
 
-    // Load saved dimensions from localStorage if available
+    // Load saved dimensions from localStorage, fallback to proper responsive screen-fit dimensions
     const savedWidth = localStorage.getItem('cybersh_overlay_width');
     const savedHeight = localStorage.getItem('cybersh_overlay_height');
-    const widthStyle = savedWidth ? `width: ${savedWidth};` : `width: 94%; max-width: 420px;`;
-    const heightStyle = savedHeight ? `height: ${savedHeight};` : `max-height: 78vh;`;
+    const widthStyle = savedWidth ? `width: ${savedWidth};` : `width: 92%; max-width: 400px;`;
+    const heightStyle = savedHeight ? `height: ${savedHeight};` : `height: auto; max-height: 80vh;`;
 
-    // Inject Modern Glassmorphism CSS & Scrollable Layout Fix
+    // Inject Modern Glassmorphism CSS & Responsive Scrollable Layout Fix
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         @keyframes cybersh-spin {
@@ -130,8 +130,8 @@
             resize: both;
             overflow-y: auto !important;
             overflow-x: hidden;
-            min-width: 280px;
-            min-height: 250px;
+            min-width: 300px;
+            min-height: 380px;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
@@ -177,7 +177,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 4. Inject Professional UI Overlay (Without Zoom Buttons)
+    // 4. Inject Professional UI Overlay (Screen-Fit Responsive)
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); ${widthStyle} ${heightStyle} background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 20px; padding: 18px; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.12); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.3);">
         
@@ -261,8 +261,10 @@
     const resizeObserver = new ResizeObserver(entries => {
         for (let entry of entries) {
             const { width, height } = entry.contentRect;
-            localStorage.setItem('cybersh_overlay_width', width + 'px');
-            localStorage.setItem('cybersh_overlay_height', height + 'px');
+            if (width > 200 && height > 200) {
+                localStorage.setItem('cybersh_overlay_width', width + 'px');
+                localStorage.setItem('cybersh_overlay_height', height + 'px');
+            }
         }
     });
     resizeObserver.observe(overlay);
