@@ -14,12 +14,49 @@
     let capturedAuthToken = "";
     let isDeviceAuthorized = false;
 
-    // Generate or retrieve a persistent Device ID for the browser
-    let deviceId = localStorage.getItem('cybersh_device_id');
-    if (!deviceId) {
-        deviceId = 'CSH-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
-        localStorage.setItem('cybersh_device_id', deviceId);
+    // Generate a robust hardware-tied permanent Device ID
+    async function getPermanentDeviceId() {
+        // Check mirror storage first for instant loading
+        let persistentId = localStorage.getItem('cybersh_permanent_device_id');
+        if (persistentId) return persistentId;
+
+        // Generate a stable fingerprint based on device hardware characteristics
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl');
+        let glVendor = '';
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                glVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) + '|' + gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            }
+        }
+
+        const rawString = [
+            navigator.hardwareConcurrency || 4,
+            navigator.deviceMemory || 8,
+            screen.width + 'x' + screen.height,
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
+            glVendor,
+            navigator.platform
+        ].join('###');
+
+        // Simple fast hash generator
+        let hash = 0;
+        for (let i = 0; i < rawString.length; i++) {
+            const char = rawString.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash |= 0;
+        }
+        
+        const uniqueHashHex = Math.abs(hash).toString(36).toUpperCase();
+        persistentId = `CSH-${uniqueHashHex}-${Math.abs(Math.sin(hash) * 1000000).toString(36).substring(2, 8).toUpperCase()}`;
+        
+        // Save permanently to localStorage mirror
+        localStorage.setItem('cybersh_permanent_device_id', persistentId);
+        return persistentId;
     }
+
+    const deviceId = await getPermanentDeviceId();
 
     // 1. Inject Floating Circular Avatar (Minimized State)
     const avatarHtml = `
@@ -27,7 +64,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 2. Inject Professional UI Overlay with Device ID & Approval status
+    // 2. Inject Professional UI Overlay with Permanent Device ID & Approval status
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 65vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -39,7 +76,7 @@
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Licensed Edition v2.6</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Permanent Hardware ID v2.7</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -51,7 +88,7 @@
         <!-- Device ID Card -->
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
             <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
-                <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Device ID</div>
+                <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Permanent Device ID</div>
                 <span id="cybersh-device-id-text" style="font-family: monospace; color: #38bdf8; font-size: 11px; font-weight: bold;">${deviceId}</span>
             </div>
             <button id="cybersh-btn-copy-id" style="background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Copy ID</button>
@@ -91,7 +128,7 @@
                 copyBtn.innerText = "Copy ID";
                 copyBtn.style.background = "#0284c7";
             }, 2000);
-            log("Device ID copied to clipboard.", "success");
+            log("Permanent Device ID copied to clipboard.", "success");
         }).catch(err => {
             log("Failed to copy Device ID", "error");
         });
@@ -199,9 +236,8 @@
         }
     };
 
-    log(`Initializing Device Authentication...`);
+    log(`Initializing Permanent Hardware ID Verification...`);
 
-    // Helper to parse DD-MM-YYYY format into a comparable timestamp
     function parseDate(dateStr) {
         const parts = dateStr.split('-');
         if (parts.length !== 3) return 0;
@@ -216,12 +252,9 @@
             
             const approvalData = await res.json();
             
-            // Check if deviceId exists as a key in the JSON
             if (approvalData && approvalData[deviceId]) {
                 const expiryDateStr = approvalData[deviceId];
                 const expiryTime = parseDate(expiryDateStr);
-                
-                // Current date benchmark (August 22, 2026)
                 const currentTime = new Date("2026-08-22").getTime();
 
                 if (expiryTime >= currentTime) {
@@ -235,7 +268,7 @@
                     log(`Error: License expired on ${expiryDateStr}. Contact support.`, "error");
                 }
             } else {
-                log(`Error: Device ID (${deviceId}) not registered. Contact @cybersh_official`, "error");
+                log(`Error: Permanent Device ID (${deviceId}) not registered. Contact @cybersh_official`, "error");
             }
         } catch (err) {
             log(`Approval check failed: ${err.message}`, "error");
@@ -244,7 +277,7 @@
 
     await checkDeviceApproval();
 
-    // 4. XHR & Fetch Interceptors for Background Execution (Only active if authorized)
+    // 4. XHR & Fetch Interceptors for Background Execution
     const XHR = window.XMLHttpRequest;
     function customXHR() {
         const xhr = new XHR();
@@ -289,7 +322,7 @@
 
     async function triggerDownload(mapId, record) {
         if (!isDeviceAuthorized) {
-            log("Download blocked: Device not authorized or license expired.", "error");
+            log("Download blocked: Device not authorized.", "error");
             return;
         }
 
@@ -350,7 +383,7 @@
 
     document.getElementById('cybersh-btn-download').onclick = () => {
         if (!isDeviceAuthorized) {
-            log("Action denied: Device ID is unauthorized or expired.", "error");
+            log("Action denied: Device ID is unauthorized.", "error");
             return;
         }
         if (lastCapturedMapId) {
