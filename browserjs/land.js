@@ -53,34 +53,69 @@
 
     const deviceId = await getPermanentDeviceId();
 
-    // Inject CSS Animation Keyframes for Loader Spinner
+    // Inject CSS Animation Keyframes for Fullscreen Loader Spinner
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         @keyframes cybersh-spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .cybersh-spinner {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid rgba(255,255,255,0.3);
+        .cybersh-fullscreen-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .cybersh-loader-box {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.95));
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            padding: 24px 36px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 20px rgba(56, 189, 248, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .cybersh-spinner-large {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
             border-radius: 50%;
-            border-top-color: #fff;
-            animation: cybersh-spin 0.8s ease-in-out infinite;
-            margin-right: 6px;
-            vertical-align: middle;
+            border-top-color: #38bdf8;
+            animation: cybersh-spin 0.8s linear infinite;
         }
     `;
     document.head.appendChild(styleTag);
 
-    // 1. Inject Floating Circular Avatar (Minimized State)
+    // 1. Inject Fullscreen Loading Overlay HTML
+    const fullscreenLoaderHtml = `
+    <div id="cybersh-global-loader" class="cybersh-fullscreen-loader">
+        <div class="cybersh-loader-box">
+            <div class="cybersh-spinner-large"></div>
+            <div>
+                <div style="font-size: 15px; font-weight: bold; color: #38bdf8; letter-spacing: 0.5px;">Downloading Map...</div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Please wait while the file is being processed</div>
+            </div>
+        </div>
+    </div>`;
+
+    // 2. Inject Floating Circular Avatar (Minimized State)
     const avatarHtml = `
     <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 8px 20px rgba(0,0,0,0.6); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 2. Inject Professional UI Overlay
+    // 3. Inject Professional UI Overlay
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 70vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -92,7 +127,7 @@
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v3.1</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v3.2</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -126,12 +161,13 @@
     </div>`;
 
     const container = document.createElement('div');
-    container.innerHTML = overlayHtml + avatarHtml;
+    container.innerHTML = fullscreenLoaderHtml + overlayHtml + avatarHtml;
     document.body.appendChild(container);
 
     const overlay = document.getElementById('cybersh-logger-overlay');
     const avatar = document.getElementById('cybersh-floating-avatar');
     const logContent = document.getElementById('cybersh-log-content');
+    const globalLoader = document.getElementById('cybersh-global-loader');
 
     function log(msg, type = 'info') {
         const color = type === 'error' ? '#f87171' : type === 'success' ? '#4ade80' : '#cbd5e1';
@@ -156,7 +192,7 @@
         });
     };
 
-    // Minimize to Avatar (Fixed: ensures avatar stays visible after close/minimize)
+    // Minimize to Avatar (Fixed to keep floating icon displayed properly)
     document.getElementById('cybersh-btn-minimize').onclick = () => {
         overlay.style.display = 'none';
         avatar.style.display = 'block';
@@ -348,10 +384,8 @@
             return;
         }
 
-        const downloadBtn = document.getElementById('cybersh-btn-download');
-        // Set Loading state with Spinner
-        downloadBtn.disabled = true;
-        downloadBtn.innerHTML = `<span class="cybersh-spinner"></span> Downloading Map...`;
+        // Show Fullscreen Loading Overlay
+        globalLoader.style.display = 'flex';
 
         const imageUrl = `https://gateway.dlrms.land.gov.bd/core-api/api/public/maps/image-view-file/${mapId}`;
         log(`Processing download for ID ${mapId}...`, "info");
@@ -368,8 +402,7 @@
 
         if (!capturedAuthToken) {
             log("Authentication missing. Please re-login.", "error");
-            downloadBtn.disabled = false;
-            downloadBtn.innerHTML = "Download Last Map";
+            globalLoader.style.display = 'none';
             return;
         }
 
@@ -413,9 +446,8 @@
         } catch (err) {
             log(`Download error: ${err.message}`, "error");
         } finally {
-            // Restore button to normal state
-            downloadBtn.disabled = false;
-            downloadBtn.innerHTML = "Download Last Map";
+            // Hide Fullscreen Loading Overlay
+            globalLoader.style.display = 'none';
         }
     }
 
