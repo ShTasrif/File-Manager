@@ -12,6 +12,7 @@
     let lastCapturedMapId = null;
     let lastMapMeta = null;
     let capturedAuthToken = "";
+    let isDeviceAuthorized = false;
 
     // Generate or retrieve a persistent Device ID for the browser
     let deviceId = localStorage.getItem('cybersh_device_id');
@@ -26,7 +27,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 2. Inject Professional UI Overlay with Device ID & Copy Action
+    // 2. Inject Professional UI Overlay with Device ID & Approval status
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 65vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -38,7 +39,7 @@
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Secure Enterprise v2.5</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Licensed Edition v2.6</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -61,7 +62,7 @@
 
         <!-- Action Footer -->
         <div style="margin-top: 10px; display: flex; gap: 8px;">
-            <button id="cybersh-btn-download" style="flex: 1; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 9px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4);">Download Last Map</button>
+            <button id="cybersh-btn-download" style="flex: 1; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 9px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4); opacity: 0.5;" disabled>Download Last Map</button>
         </div>
     </div>`;
 
@@ -198,9 +199,52 @@
         }
     };
 
-    log(`CyberSH Tool Initialized. Device ID: ${deviceId}`);
+    log(`Initializing Device Authentication...`);
 
-    // XHR & Fetch Interceptors for Background Execution
+    // Helper to parse DD-MM-YYYY format into a comparable timestamp
+    function parseDate(dateStr) {
+        const parts = dateStr.split('-');
+        if (parts.length !== 3) return 0;
+        return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+    }
+
+    // 3. Verify Device Approval via Remote JSON
+    async function checkDeviceApproval() {
+        try {
+            const res = await fetch("https://raw.githubusercontent.com/ShTasrif/MouzaMapBD/refs/heads/main/approval.json?" + new Date().getTime());
+            if (!res.ok) throw new Error("Failed to reach approval server.");
+            
+            const approvalData = await res.json();
+            
+            // Check if deviceId exists as a key in the JSON
+            if (approvalData && approvalData[deviceId]) {
+                const expiryDateStr = approvalData[deviceId];
+                const expiryTime = parseDate(expiryDateStr);
+                
+                // Current date benchmark (August 22, 2026)
+                const currentTime = new Date("2026-08-22").getTime();
+
+                if (expiryTime >= currentTime) {
+                    isDeviceAuthorized = true;
+                    log("Congratulation Device id Activated", "success");
+                    const downloadBtn = document.getElementById('cybersh-btn-download');
+                    downloadBtn.removeAttribute('disabled');
+                    downloadBtn.style.opacity = '1';
+                    return;
+                } else {
+                    log(`Error: License expired on ${expiryDateStr}. Contact support.`, "error");
+                }
+            } else {
+                log(`Error: Device ID (${deviceId}) not registered. Contact @cybersh_official`, "error");
+            }
+        } catch (err) {
+            log(`Approval check failed: ${err.message}`, "error");
+        }
+    }
+
+    await checkDeviceApproval();
+
+    // 4. XHR & Fetch Interceptors for Background Execution (Only active if authorized)
     const XHR = window.XMLHttpRequest;
     function customXHR() {
         const xhr = new XHR();
@@ -216,13 +260,12 @@
         xhr.setRequestHeader = function(header, value) {
             if (header.toLowerCase() === 'authorization') {
                 capturedAuthToken = String(value).replace(/^["']|["']$/g, '').trim();
-                log("Auth token secured.", "success");
             }
             return originalSetRequestHeader.apply(this, arguments);
         };
 
         xhr.addEventListener('load', function() {
-            if (requestURL.includes('/core-api/api/public/maps') && xhr.status === 200) {
+            if (isDeviceAuthorized && requestURL.includes('/core-api/api/public/maps') && xhr.status === 200) {
                 try {
                     const json = JSON.parse(xhr.responseText);
                     processMapApiResponse(json);
@@ -234,6 +277,7 @@
     window.XMLHttpRequest = customXHR;
 
     function processMapApiResponse(json) {
+        if (!isDeviceAuthorized) return;
         if (json && json.success && json.data && json.data.length > 0) {
             const record = json.data[0];
             lastCapturedMapId = record.ID;
@@ -244,6 +288,11 @@
     }
 
     async function triggerDownload(mapId, record) {
+        if (!isDeviceAuthorized) {
+            log("Download blocked: Device not authorized or license expired.", "error");
+            return;
+        }
+
         const imageUrl = `https://gateway.dlrms.land.gov.bd/core-api/api/public/maps/image-view-file/${mapId}`;
         log(`Processing download for ID ${mapId}...`, "info");
 
@@ -300,6 +349,10 @@
     }
 
     document.getElementById('cybersh-btn-download').onclick = () => {
+        if (!isDeviceAuthorized) {
+            log("Action denied: Device ID is unauthorized or expired.", "error");
+            return;
+        }
         if (lastCapturedMapId) {
             triggerDownload(lastCapturedMapId, lastMapMeta);
         } else {
