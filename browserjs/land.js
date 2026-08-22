@@ -1,5 +1,5 @@
 (async function() {
-    // If elements already exist, toggle visibility properly without bugs
+    // If elements already exist, toggle visibility properly without bugs or disappearing
     const existingAvatar = document.getElementById('cybersh-floating-avatar');
     const existingOverlay = document.getElementById('cybersh-logger-overlay');
     
@@ -134,11 +134,11 @@
         </div>
     </div>`;
 
-    // 2. Inject Top Countdown Banner HTML (20 Seconds Timer)
+    // 2. Inject Top Countdown Banner HTML
     const countdownBannerHtml = `
     <div id="cybersh-countdown-banner">
         <span>🛡️ Keyboard Locked:</span>
-        <span id="cybersh-timer-count" style="font-weight: bold; font-family: monospace;">20s</span>
+        <span id="cybersh-timer-count" style="font-weight: bold; font-family: monospace;">30s</span>
     </div>`;
 
     // 3. Inject Floating Circular Avatar (Minimized State)
@@ -147,9 +147,9 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 4. Inject Professional UI Overlay
+    // 4. Inject Professional UI Overlay (With Professional Minimize Icon & Countdown Settings)
     const overlayHtml = `
-    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 70vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
+    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 75vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
         <!-- Header / Drag Handle -->
         <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.6); padding-bottom: 10px; margin-bottom: 10px; cursor: grab;">
@@ -164,7 +164,9 @@
             </div>
             <div style="display: flex; gap: 6px;">
                 <button id="cybersh-btn-support" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none;">Support</button>
-                <button id="cybersh-btn-minimize" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;" title="Minimize">🗕</button>
+                <button id="cybersh-btn-minimize" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); width: 28px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Minimize">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
             </div>
         </div>
 
@@ -183,14 +185,20 @@
             <input type="text" id="cybersh-custom-filename" placeholder="e.g. CyberSH_৭৪_মাধবপুর (leave empty for auto)" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none;" />
         </div>
 
-        <!-- Webpage Keyboard Lock Toggle Checkbox (Default Checked) -->
-        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 11px; color: #cbd5e1; font-weight: 500;">Disable Page Keyboards (Dropdowns work)</span>
-            <input type="checkbox" id="cybersh-toggle-keyboard-lock" checked style="width: 16px; height: 16px; accent-color: #0284c7; cursor: pointer;" />
+        <!-- Webpage Keyboard Lock Toggle & Adjustable Countdown Configuration -->
+        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 11px; color: #cbd5e1; font-weight: 500;">Disable Page Keyboards (Dropdowns work)</span>
+                <input type="checkbox" id="cybersh-toggle-keyboard-lock" checked style="width: 16px; height: 16px; accent-color: #0284c7; cursor: pointer;" />
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 6px;">
+                <span style="font-size: 10px; color: #94a3b8;">Lock Duration (Seconds):</span>
+                <input type="number" id="cybersh-timer-duration" value="30" min="1" max="300" style="width: 50px; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 4px; padding: 2px 4px; color: #38bdf8; font-size: 11px; text-align: center; outline: none;" />
+            </div>
         </div>
 
         <!-- Log Terminal Window -->
-        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; max-height: 25vh; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.75); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
+        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; max-height: 20vh; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.75); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
 
         <!-- Action Footer -->
         <div style="margin-top: 10px; display: flex; gap: 8px;">
@@ -209,17 +217,20 @@
     const keyboardLockCheckbox = document.getElementById('cybersh-toggle-keyboard-lock');
     const countdownBanner = document.getElementById('cybersh-countdown-banner');
     const timerCountSpan = document.getElementById('cybersh-timer-count');
+    const timerDurationInput = document.getElementById('cybersh-timer-duration');
 
-    // 20-Second Countdown Timer Logic
-    let timeLeft = 20;
-    const countdownInterval = setInterval(() => {
+    // Adjustable Countdown Timer Logic (Default 30 seconds)
+    let timeLeft = parseInt(timerDurationInput.value) || 30;
+    timerCountSpan.innerText = timeLeft + 's';
+
+    let countdownInterval = setInterval(() => {
         timeLeft--;
         if (timeLeft > 0) {
             timerCountSpan.innerText = timeLeft + 's';
         } else {
             clearInterval(countdownInterval);
             if (keyboardLockCheckbox) {
-                keyboardLockCheckbox.checked = false; // Automatically uncheck after 20 seconds
+                keyboardLockCheckbox.checked = false; // Automatically uncheck when timer ends
             }
             if (countdownBanner) {
                 countdownBanner.style.transition = 'opacity 0.5s ease';
@@ -228,6 +239,32 @@
             }
         }
     }, 1000);
+
+    // Allow user to change timer duration manually from the panel input
+    timerDurationInput.onchange = () => {
+        let val = parseInt(timerDurationInput.value);
+        if (!isNaN(val) && val > 0) {
+            clearInterval(countdownInterval);
+            timeLeft = val;
+            timerCountSpan.innerText = timeLeft + 's';
+            if (countdownBanner) countdownBanner.style.opacity = '1';
+            
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    timerCountSpan.innerText = timeLeft + 's';
+                } else {
+                    clearInterval(countdownInterval);
+                    if (keyboardLockCheckbox) keyboardLockCheckbox.checked = false;
+                    if (countdownBanner) {
+                        countdownBanner.style.transition = 'opacity 0.5s ease';
+                        countdownBanner.style.opacity = '0';
+                        setTimeout(() => countdownBanner.remove(), 500);
+                    }
+                }
+            }, 1000);
+        }
+    };
 
     // Page-wide Keyboard Interceptor (Leaves Dropdowns & Custom Filename Input Free)
     document.addEventListener('focusin', function(e) {
@@ -270,7 +307,7 @@
         });
     };
 
-    // Minimize to Avatar (Fixed state toggle)
+    // Minimize to Avatar (Fixed toggle logic without position jumps)
     document.getElementById('cybersh-btn-minimize').onclick = () => {
         overlay.style.display = 'none';
         avatar.style.display = 'block';
