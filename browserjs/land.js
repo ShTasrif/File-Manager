@@ -53,30 +53,30 @@
 
     const deviceId = await getPermanentDeviceId();
 
-    // 1. Inject Floating Circular Avatar (Minimized State)
+    // 1. Inject Floating Circular Avatar (Minimized State - defaults to top-left when minimized)
     const avatarHtml = `
-    <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 8px 20px rgba(0,0,0,0.6); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
+    <div id="cybersh-floating-avatar" style="position: fixed; top: 20px; left: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 8px 20px rgba(0,0,0,0.6); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 2. Inject Professional UI Overlay (Cross icon moved to top-left)
+    // 2. Inject Professional UI Overlay (Cross button on the right)
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 65vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
         <!-- Header / Drag Handle -->
         <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.6); padding-bottom: 10px; margin-bottom: 10px; cursor: grab;">
             <div style="display: flex; align-items: center; gap: 8px;">
-                <button id="cybersh-btn-minimize" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Minimize">✕</button>
                 <div style="background: rgba(56, 189, 248, 0.1); padding: 5px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2);">
                     <span style="font-size: 14px;">🛡️</span>
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 12px; letter-spacing: 0.5px;">CyberSH Mouza Map</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Licensed v2.9</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Licensed v3.0</div>
                 </div>
             </div>
-            <div>
+            <div style="display: flex; gap: 6px; align-items: center;">
                 <button id="cybersh-btn-support" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none;">Support</button>
+                <button id="cybersh-btn-minimize" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer;" title="Minimize">✕</button>
             </div>
         </div>
 
@@ -129,9 +129,13 @@
         });
     };
 
-    // Minimize to Avatar
+    // Minimize to Avatar (Resets position to top-left)
     document.getElementById('cybersh-btn-minimize').onclick = () => {
         overlay.style.display = 'none';
+        avatar.style.top = '20px';
+        avatar.style.left = '20px';
+        avatar.style.bottom = 'auto';
+        avatar.style.right = 'auto';
         avatar.style.display = 'block';
         log("Minimized to background avatar. Script active.");
     };
@@ -179,7 +183,7 @@
         isDragging = false;
     }
 
-    // Make Minimized Avatar Draggable & Clickable to Restore
+    // Make Minimized Avatar Draggable anywhere smoothly
     let avatarDragging = false;
     let avatarStartX, avatarStartY, avatarInitialX, avatarInitialY;
     let hasMoved = false;
@@ -355,7 +359,6 @@
             const dropdownValues = document.querySelectorAll('.ng-value-label');
             for (let el of dropdownValues) {
                 let txt = el.innerText.trim();
-                // Matches strings containing numbers and Bengali/English letters (e.g. "৭৪ - মাধবপুর")
                 if (txt && (txt.includes('-') || /[\u0980-\u09FF]/.test(txt))) {
                     mouzaName = txt.replace(/\s+/g, '_').replace(/[^\w\u0980-\u09FF]/g, '_');
                     break;
