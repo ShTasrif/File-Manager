@@ -10,7 +10,7 @@
     const overlayHtml = `
     <div id="aincrad-logger-overlay" style="position: fixed; top: 10px; left: 10px; right: 10px; max-height: 55vh; background: rgba(15, 23, 42, 0.95); color: #f8fafc; z-index: 999999; border-radius: 12px; padding: 12px; font-family: monospace; font-size: 11px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; border: 1px solid #334155;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 8px;">
-            <strong style="color: #38bdf8;">🗺️ DLRMS Auth Fixer</strong>
+            <strong style="color: #38bdf8;">🗺️ DLRMS 401 Fixer</strong>
             <div>
                 <button id="aincrad-btn-download" style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; margin-right: 4px; cursor: pointer;">Download Map</button>
                 <button id="aincrad-btn-close" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;">X</button>
@@ -35,43 +35,9 @@
         document.getElementById('aincrad-logger-overlay').remove();
     };
 
-    log("Initialized. Monitoring network headers...");
+    log("Initialized. Hooking XHR & Fetch headers...");
 
-    // 1. Hook Fetch to catch Bearer Token from request headers
-    const originalFetch = window.fetch;
-    window.fetch = async function(...args) {
-        try {
-            const url = args[0];
-            const options = args[1] || {};
-            
-            if (typeof url === 'string' && url.includes('/core-api/api/public/maps')) {
-                if (options.headers) {
-                    // Handle Headers object or plain object
-                    if (options.headers instanceof Headers) {
-                        capturedAuthToken = options.headers.get('authorization') || options.headers.get('Authorization');
-                    } else if (typeof options.headers === 'object') {
-                        capturedAuthToken = options.headers['authorization'] || options.headers['Authorization'];
-                    }
-                }
-                if (capturedAuthToken) {
-                    log("Authorization token successfully captured!", "success");
-                }
-            }
-        } catch(e) {}
-
-        const response = await originalFetch.apply(this, args);
-        try {
-            const url = args[0];
-            if (typeof url === 'string' && url.includes('/core-api/api/public/maps')) {
-                const clone = response.clone();
-                const json = await clone.json();
-                processMapApiResponse(json);
-            }
-        } catch (err) {}
-        return response;
-    };
-
-    // 2. Hook XMLHttpRequest to catch token if sent via XHR
+    // 1. Hook XHR to catch clean Authorization header
     const XHR = window.XMLHttpRequest;
     function customXHR() {
         const xhr = new XHR();
@@ -86,8 +52,9 @@
 
         xhr.setRequestHeader = function(header, value) {
             if (header.toLowerCase() === 'authorization') {
-                capturedAuthToken = value;
-                log("Captured Authorization token from XHR!", "success");
+                // Clean up any extra quotes or spaces
+                capturedAuthToken = String(value).replace(/^["']|["']$/g, '').trim();
+                log("Authorization token captured & sanitized!", "success");
             }
             return originalSetRequestHeader.apply(this, arguments);
         };
@@ -117,24 +84,30 @@
         const imageUrl = `https://gateway.dlrms.land.gov.bd/core-api/api/public/maps/image-view-file/${mapId}`;
         log(`Requesting image for ID ${mapId}...`, "info");
 
-        // Fallback: check localStorage/sessionStorage if token wasn't intercepted yet
+        // Fallback search in storage if token is empty
         if (!capturedAuthToken) {
             for (let i = 0; i < localStorage.length; i++) {
                 const val = localStorage.getItem(localStorage.key(i));
-                if (val && val.includes('Bearer ')) {
-                    capturedAuthToken = val;
+                if (val && val.includes('Bearer')) {
+                    capturedAuthToken = val.replace(/^["']|["']$/g, '').trim();
                     break;
                 }
             }
         }
 
+        if (!capturedAuthToken) {
+            log("Error: No Bearer token found. Please re-login on the site.", "error");
+            return;
+        }
+
         try {
+            // Include precise headers matching the working curl request
             const headers = {
-                "accept": "application/json"
+                "accept": "application/json",
+                "authorization": capturedAuthToken.startsWith('Bearer') ? capturedAuthToken : `Bearer ${capturedAuthToken}`,
+                "origin": "https://dlrms.land.gov.bd",
+                "referer": "https://dlrms.land.gov.bd/"
             };
-            if (capturedAuthToken) {
-                headers["authorization"] = capturedAuthToken;
-            }
 
             const imgRes = await fetch(imageUrl, { headers: headers });
             if (!imgRes.ok) throw new Error(`HTTP error status: ${imgRes.status}`);
