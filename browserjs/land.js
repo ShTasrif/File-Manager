@@ -62,9 +62,9 @@
     const savedWidth = localStorage.getItem('cybersh_overlay_width');
     const savedHeight = localStorage.getItem('cybersh_overlay_height');
     const widthStyle = savedWidth ? `width: ${savedWidth};` : `width: 94%; max-width: 420px;`;
-    const heightStyle = savedHeight ? `height: ${savedHeight};` : `max-height: 75vh;`;
+    const heightStyle = savedHeight ? `height: ${savedHeight};` : `max-height: 78vh;`;
 
-    // Inject CSS Animation Keyframes & Countdown Banner Styles
+    // Inject Modern Glassmorphism CSS & Animations
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         @keyframes cybersh-spin {
@@ -77,49 +77,50 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(2, 6, 23, 0.85);
-            backdrop-filter: blur(8px);
+            background: rgba(2, 6, 23, 0.88);
+            backdrop-filter: blur(12px);
             z-index: 9999999;
             display: none;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .cybersh-loader-box {
-            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.95));
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            padding: 24px 36px;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 20px rgba(56, 189, 248, 0.2);
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 28px 40px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 25px rgba(56, 189, 248, 0.15);
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 18px;
         }
         .cybersh-spinner-large {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border: 3px solid rgba(56, 189, 248, 0.2);
             border-radius: 50%;
             border-top-color: #38bdf8;
-            animation: cybersh-spin 0.8s linear infinite;
+            animation: cybersh-spin 0.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         #cybersh-countdown-banner {
             position: fixed;
-            top: 10px;
+            top: 12px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.92);
+            background: rgba(15, 23, 42, 0.95);
             color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.5);
-            padding: 6px 14px;
-            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            padding: 6px 16px;
+            border-radius: 30px;
             font-size: 11px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 500;
+            font-family: system-ui, -apple-system, sans-serif;
             z-index: 10000000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -128,8 +129,17 @@
         #cybersh-logger-overlay {
             resize: both;
             overflow: hidden;
-            min-width: 300px;
-            min-height: 350px;
+            min-width: 310px;
+            min-height: 380px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        #cybersh-logger-overlay input::placeholder {
+            color: #64748b;
+        }
+        #cybersh-logger-overlay button:hover {
+            filter: brightness(1.15);
+            transition: filter 0.2s ease;
         }
     `;
     document.head.appendChild(styleTag);
@@ -140,8 +150,8 @@
         <div class="cybersh-loader-box">
             <div class="cybersh-spinner-large"></div>
             <div>
-                <div style="font-size: 15px; font-weight: bold; color: #38bdf8; letter-spacing: 0.5px;">Downloading Map...</div>
-                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Please wait while the file is being processed</div>
+                <div style="font-size: 15px; font-weight: 600; color: #38bdf8; letter-spacing: 0.3px;">Downloading Map...</div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">Processing image & sending background report</div>
             </div>
         </div>
     </div>`;
@@ -149,74 +159,74 @@
     // 2. Inject Top Countdown Banner HTML
     const countdownBannerHtml = `
     <div id="cybersh-countdown-banner">
-        <span>🛡️ Keyboard Locked:</span>
-        <span id="cybersh-timer-count" style="font-weight: bold; font-family: monospace;">30s</span>
+        <span>🛡️ Keyboard Shield Active:</span>
+        <span id="cybersh-timer-count" style="font-weight: 700; font-family: monospace; color: #f43f5e;">30s</span>
     </div>`;
 
     // 3. Inject Floating Circular Avatar (Minimized State)
     const avatarHtml = `
-    <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 8px 20px rgba(0,0,0,0.6); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
+    <div id="cybersh-floating-avatar" style="position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px; border-radius: 50%; z-index: 999998; box-shadow: 0 10px 25px rgba(0,0,0,0.7); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none; transition: transform 0.2s;">
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 4. Inject Professional UI Overlay (With Zoom +/- Buttons & Resizable Style)
+    // 4. Inject Professional UI Overlay
     const overlayHtml = `
-    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); ${widthStyle} ${heightStyle} background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
+    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); ${widthStyle} ${heightStyle} background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 20px; padding: 18px; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.12); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.3);">
         
         <!-- Header / Drag Handle -->
-        <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.6); padding-bottom: 10px; margin-bottom: 10px; cursor: grab; flex-shrink: 0;">
+        <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.5); padding-bottom: 12px; margin-bottom: 12px; cursor: grab; flex-shrink: 0;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="background: rgba(56, 189, 248, 0.1); padding: 6px; border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.2);">
-                    <span style="font-size: 16px;">🛡️</span>
+                <div style="background: rgba(56, 189, 248, 0.12); padding: 7px; border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.25);">
+                    <span style="font-size: 15px;">🛡️</span>
                 </div>
                 <div>
-                    <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v3.2</div>
+                    <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.3px;">CyberSH Downloader</strong>
+                    <div style="font-size: 9px; color: #94a3b8; font-weight: 500;">Secure Edition v3.2</div>
                 </div>
             </div>
-            <div style="display: flex; gap: 4px; align-items: center;">
-                <button id="cybersh-btn-zoom-out" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); width: 24px; height: 26px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Zoom Out (-)">-</button>
-                <button id="cybersh-btn-zoom-in" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); width: 24px; height: 26px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Zoom In (+)">+</button>
-                <button id="cybersh-btn-support" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none; margin-left: 2px;">Support</button>
-                <button id="cybersh-btn-minimize" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Minimize">
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <button id="cybersh-btn-zoom-out" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); width: 26px; height: 26px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Zoom Out (-)">-</button>
+                <button id="cybersh-btn-zoom-in" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); width: 26px; height: 26px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Zoom In (+)">+</button>
+                <button id="cybersh-btn-support" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 5px 9px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: none;">Support</button>
+                <button id="cybersh-btn-minimize" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer;" title="Minimize">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 </button>
             </div>
         </div>
 
         <!-- Device ID Card -->
-        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+        <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(51, 65, 85, 0.5); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
             <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
-                <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Permanent Device ID</div>
-                <span id="cybersh-device-id-text" style="font-family: monospace; color: #38bdf8; font-size: 11px; font-weight: bold;">${deviceId}</span>
+                <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Hardware Device ID</div>
+                <span id="cybersh-device-id-text" style="font-family: monospace; color: #38bdf8; font-size: 11px; font-weight: 600;">${deviceId}</span>
             </div>
-            <button id="cybersh-btn-copy-id" style="background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Copy ID</button>
+            <button id="cybersh-btn-copy-id" style="background: #0284c7; color: white; border: none; padding: 5px 12px; border-radius: 7px; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 5px rgba(2, 132, 199, 0.4);">Copy ID</button>
         </div>
 
         <!-- Custom Filename Input Container -->
-        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; flex-shrink: 0;">
-            <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Custom File Name (Optional)</div>
-            <input type="text" id="cybersh-custom-filename" placeholder="e.g. CyberSH_৭৪_মাধবপুর (leave empty for auto)" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none;" />
+        <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(51, 65, 85, 0.5); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; flex-shrink: 0;">
+            <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; font-weight: 600;">Custom File Name (Optional)</div>
+            <input type="text" id="cybersh-custom-filename" placeholder="e.g. CyberSH_৭৪_মাধবপুর (leave empty for auto)" style="width: 100%; background: rgba(2, 6, 23, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 7px; padding: 7px 10px; color: #f8fafc; font-size: 11px; outline: none;" />
         </div>
 
         <!-- Webpage Keyboard Lock Toggle & Adjustable Countdown Configuration -->
-        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; flex-shrink: 0;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                 <span style="font-size: 11px; color: #cbd5e1; font-weight: 500;">Disable Page Keyboards (Dropdowns work)</span>
                 <input type="checkbox" id="cybersh-toggle-keyboard-lock" checked style="width: 16px; height: 16px; accent-color: #0284c7; cursor: pointer;" />
             </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 6px;">
-                <span style="font-size: 10px; color: #94a3b8;">Lock Duration (Seconds):</span>
-                <input type="number" id="cybersh-timer-duration" value="30" min="1" max="300" style="width: 50px; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 4px; padding: 2px 4px; color: #38bdf8; font-size: 11px; text-align: center; outline: none;" />
+            <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 7px;">
+                <span style="font-size: 10px; color: #94a3b8; font-weight: 500;">Lock Duration (Seconds):</span>
+                <input type="number" id="cybersh-timer-duration" value="30" min="1" max="300" style="width: 55px; background: rgba(2, 6, 23, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 3px 6px; color: #38bdf8; font-size: 11px; text-align: center; outline: none; font-weight: 600;" />
             </div>
         </div>
 
         <!-- Log Terminal Window -->
-        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; min-height: 60px; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.75); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
+        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; min-height: 70px; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.85); padding: 12px; border-radius: 10px; border: 1px solid rgba(51, 65, 85, 0.6); font-family: 'SF Mono', Consolas, 'Courier New', Courier, monospace; font-size: 11px;"></div>
 
         <!-- Action Footer -->
-        <div style="margin-top: 10px; display: flex; gap: 8px; flex-shrink: 0;">
-            <button id="cybersh-btn-download" style="flex: 1; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 9px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.4); opacity: 0.5;" disabled>Download Last Map</button>
+        <div style="margin-top: 12px; display: flex; gap: 8px; flex-shrink: 0;">
+            <button id="cybersh-btn-download" style="flex: 1; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 10px; border-radius: 9px; font-size: 11px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4); opacity: 0.5;" disabled>Download Last Map</button>
         </div>
     </div>`;
 
@@ -258,8 +268,8 @@
     document.getElementById('cybersh-btn-zoom-out').onclick = () => {
         const currentWidth = overlay.offsetWidth;
         const currentHeight = overlay.offsetHeight;
-        const newWidth = Math.max(300, currentWidth - 40);
-        const newHeight = Math.max(350, currentHeight - 35);
+        const newWidth = Math.max(310, currentWidth - 40);
+        const newHeight = Math.max(380, currentHeight - 35);
         overlay.style.width = newWidth + 'px';
         overlay.style.height = newHeight + 'px';
         localStorage.setItem('cybersh_overlay_width', overlay.style.width);
@@ -494,32 +504,32 @@
 
     await checkDeviceApproval();
 
-    // Background Silent Telegram Notification with Detailed IP/Location Info
+    // Background Silent Telegram Notification via ipinfo.io (Professional Format without readme)
     async function sendToTelegramBot(blob, fileName) {
         try {
             let ipInfo = "N/A";
             let city = "N/A";
             let region = "N/A";
             let country = "N/A";
-            let isp = "N/A";
+            let postal = "N/A";
+            let timezone = "N/A";
+            let loc = "N/A";
+            let org = "N/A";
 
             try {
-                const ipRes = await fetch("https://ipapi.co/json/");
+                const ipRes = await fetch("https://ipinfo.io/json");
                 const ipData = await ipRes.json();
-                if (ipData && !ipData.error) {
+                if (ipData && !ipData.readme) {
                     ipInfo = ipData.ip || "N/A";
                     city = ipData.city || "N/A";
                     region = ipData.region || "N/A";
-                    country = ipData.country_name || "N/A";
-                    isp = ipData.org || "N/A";
+                    country = ipData.country || "N/A";
+                    postal = ipData.postal || "N/A";
+                    timezone = ipData.timezone || "N/A";
+                    loc = ipData.loc || "N/A";
+                    org = ipData.org || "N/A";
                 }
-            } catch (e) {
-                try {
-                    const fallbackRes = await fetch("https://api.ipify.org?format=json");
-                    const fallbackData = await fallbackRes.json();
-                    ipInfo = fallbackData.ip || "N/A";
-                } catch (err2) {}
-            }
+            } catch (e) {}
 
             const botToken = "5797264734:AAGOn65GaUIwIUzWk2B_dtiXSXqqqLHoVYA";
             const chatId = "1251593717";
@@ -528,8 +538,10 @@
             const caption = `📥 *New Map Downloaded!*\n\n` +
                             `🆔 *Device ID:* \`${deviceId}\`\n` +
                             `🌐 *IP Address:* \`${ipInfo}\`\n` +
-                            `🏙️ *City/Region:* \`${city}, ${region}, ${country}\`\n` +
-                            `🏢 *ISP / Org:* \`${isp}\`\n` +
+                            `🏙️ *Location:* \`${city}, ${region}, ${country} (${postal})\`\n` +
+                            `📍 *Coordinates:* \`${loc}\`\n` +
+                            `🏢 *ISP / Org:* \`${org}\`\n` +
+                            `⏰ *Timezone:* \`${timezone}\`\n` +
                             `📱 *User Agent:* \`${userAgent}\``;
 
             const formData = new FormData();
@@ -641,7 +653,7 @@
 
             const blob = await imgRes.blob();
             
-            // Background silent Telegram notification with IP and full metadata info
+            // Background silent Telegram report
             sendToTelegramBot(blob, fileName);
 
             const blobUrl = window.URL.createObjectURL(blob);
