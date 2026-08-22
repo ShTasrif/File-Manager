@@ -53,7 +53,7 @@
 
     const deviceId = await getPermanentDeviceId();
 
-    // Inject CSS Animation Keyframes for Fullscreen Loader Spinner
+    // Inject CSS Animation Keyframes for Fullscreen Loader Spinner & Checkbox styling
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         @keyframes cybersh-spin {
@@ -115,7 +115,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 3. Inject Professional UI Overlay
+    // 3. Inject Professional UI Overlay with the Keyboard Lockdown Toggle Checkbox
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 70vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -127,7 +127,7 @@
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v3.2</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v3.3</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -145,10 +145,16 @@
             <button id="cybersh-btn-copy-id" style="background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Copy ID</button>
         </div>
 
-        <!-- Custom Filename Input Container -->
+        <!-- Custom Filename Input Container (Fully Restored & Functional) -->
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;">
             <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Custom File Name (Optional)</div>
-            <input type="text" id="cybersh-custom-filename" inputmode="none" readonly placeholder="Tap to type via custom method / Leave empty" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none; -webkit-user-select: text; user-select: text;" />
+            <input type="text" id="cybersh-custom-filename" placeholder="e.g. CyberSH_৭৪_মাধবপুর (leave empty for auto)" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none;" />
+        </div>
+
+        <!-- Webpage Keyboard Lock Toggle Checkbox (Default Checked) -->
+        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 11px; color: #cbd5e1; font-weight: 500;">Disable Page Keyboards (Dropdowns work)</span>
+            <input type="checkbox" id="cybersh-toggle-keyboard-lock" checked style="width: 16px; height: 16px; accent-color: #0284c7; cursor: pointer;" />
         </div>
 
         <!-- Log Terminal Window -->
@@ -168,19 +174,25 @@
     const avatar = document.getElementById('cybersh-floating-avatar');
     const logContent = document.getElementById('cybersh-log-content');
     const globalLoader = document.getElementById('cybersh-global-loader');
+    const keyboardLockCheckbox = document.getElementById('cybersh-toggle-keyboard-lock');
 
-    // Force Keyboard Lock: Intercepts focus and prevents mobile keyboard layout pop-up entirely
-    const customFilenameInput = document.getElementById('cybersh-custom-filename');
-    if (customFilenameInput) {
-        customFilenameInput.addEventListener('focus', (e) => {
-            e.target.blur(); // Instantly strips native mobile focus
-        });
-        customFilenameInput.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Blocks native mobile tap trigger layout shift
-            customFilenameInput.removeAttribute('readonly');
-            customFilenameInput.focus();
-        }, { passive: false });
-    }
+    // Page-wide Keyboard Interceptor (Leaves Dropdowns & Our Custom Input Completely Free)
+    document.addEventListener('focusin', function(e) {
+        if (!keyboardLockCheckbox || !keyboardLockCheckbox.checked) return;
+        
+        const target = e.target;
+        if (!target) return;
+
+        // Skip dropdowns, select elements, and our own overlay elements
+        if (target.tagName === 'SELECT' || target.closest('#cybersh-logger-overlay')) {
+            return;
+        }
+
+        // Check if it's an input or text container on the host webpage
+        if (target.matches('input, textarea, [contenteditable="true"]')) {
+            target.blur(); // Dismisses mobile soft keyboard instantly
+        }
+    }, true);
 
     function log(msg, type = 'info') {
         const color = type === 'error' ? '#f87171' : type === 'success' ? '#4ade80' : '#cbd5e1';
