@@ -115,7 +115,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 3. Inject Professional UI Overlay (with inputmode="none" applied to custom input)
+    // 3. Inject Professional UI Overlay
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 70vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -148,7 +148,7 @@
         <!-- Custom Filename Input Container -->
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;">
             <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Custom File Name (Optional)</div>
-            <input type="text" id="cybersh-custom-filename" inputmode="none" placeholder="e.g. CyberSH_৭৪_মাধবপুর (leave empty for auto)" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none;" />
+            <input type="text" id="cybersh-custom-filename" inputmode="none" readonly placeholder="Tap to type via custom method / Leave empty" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none; -webkit-user-select: text; user-select: text;" />
         </div>
 
         <!-- Log Terminal Window -->
@@ -169,24 +169,17 @@
     const logContent = document.getElementById('cybersh-log-content');
     const globalLoader = document.getElementById('cybersh-global-loader');
 
-    // Force Keyboard Lock Function Setup
-    function setupKeyboardLock(el) {
-        el.setAttribute('inputmode', 'none');
-        ['focus', 'touchstart', 'click'].forEach(eventType => {
-            el.addEventListener(eventType, function(e) {
-                this.setAttribute('readonly', 'readonly');
-                this.blur();
-                setTimeout(() => {
-                    this.removeAttribute('readonly');
-                }, 50);
-            }, { passive: true });
-        });
-    }
-
-    // Apply keyboard lock to custom filename input immediately
+    // Force Keyboard Lock: Intercepts focus and prevents mobile keyboard layout pop-up entirely
     const customFilenameInput = document.getElementById('cybersh-custom-filename');
     if (customFilenameInput) {
-        setupKeyboardLock(customFilenameInput);
+        customFilenameInput.addEventListener('focus', (e) => {
+            e.target.blur(); // Instantly strips native mobile focus
+        });
+        customFilenameInput.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Blocks native mobile tap trigger layout shift
+            customFilenameInput.removeAttribute('readonly');
+            customFilenameInput.focus();
+        }, { passive: false });
     }
 
     function log(msg, type = 'info') {
