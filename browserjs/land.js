@@ -59,9 +59,9 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 2. Inject Professional UI Overlay
+    // 2. Inject Professional UI Overlay with Custom Filename Input
     const overlayHtml = `
-    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 65vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
+    <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 70vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
         <!-- Header / Drag Handle -->
         <div id="cybersh-drag-handle" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(51, 65, 85, 0.6); padding-bottom: 10px; margin-bottom: 10px; cursor: grab;">
@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v2.9</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v3.0</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -81,7 +81,7 @@
         </div>
 
         <!-- Device ID Card -->
-        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
             <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">
                 <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Permanent Device ID</div>
                 <span id="cybersh-device-id-text" style="font-family: monospace; color: #38bdf8; font-size: 11px; font-weight: bold;">${deviceId}</span>
@@ -89,8 +89,14 @@
             <button id="cybersh-btn-copy-id" style="background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Copy ID</button>
         </div>
 
+        <!-- Custom Filename Input Container -->
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;">
+            <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Custom File Name (Optional)</div>
+            <input type="text" id="cybersh-custom-filename" placeholder="e.g. CyberSH_৭৪_মাধবপুর (leave empty for auto)" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none;" />
+        </div>
+
         <!-- Log Terminal Window -->
-        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; max-height: 30vh; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.75); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
+        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; max-height: 25vh; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.75); padding: 10px; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.5); font-family: 'Courier New', Courier, monospace; font-size: 11px;"></div>
 
         <!-- Action Footer -->
         <div style="margin-top: 10px; display: flex; gap: 8px;">
@@ -350,42 +356,21 @@
             const imgRes = await fetch(imageUrl, { headers: headers });
             if (!imgRes.ok) throw new Error(`HTTP error status: ${imgRes.status}`);
 
-            // Direct extraction from Angular component properties / DOM scan for Mouza selection
-            let mouzaName = "mouza";
-            const selects = document.querySelectorAll('ng-select');
+            // Check if user manually typed a custom filename
+            const customInput = document.getElementById('cybersh-custom-filename');
+            let fileName = "";
             
-            for (let sel of selects) {
-                // Look for the specific ng-select control bound to Mouza by inspecting inner text elements or Angular ng-reflect properties
-                let textContainer = sel.querySelector('.ng-value-container');
-                if (textContainer) {
-                    let fullText = textContainer.innerText.trim();
-                    // Clean unwanted labels like placeholder text if present
-                    fullText = fullText.replace(/মৌজা/g, '').trim();
-                    if (fullText.length > 1) {
-                        mouzaName = fullText;
-                        break;
-                    }
+            if (customInput && customInput.value.trim() !== "") {
+                fileName = customInput.value.trim();
+                // Ensure extension is attached
+                if (!fileName.toLowerCase().endsWith('.jpg') && !fileName.toLowerCase().endsWith('.png')) {
+                    fileName += ".jpg";
                 }
+            } else {
+                // Fallback auto filename format
+                const sheetNo = record && record.SHEET_NO ? record.SHEET_NO : '1';
+                fileName = `CyberSH_mouza_sit_${sheetNo}.jpg`;
             }
-
-            // Fallback scan: look for any element displaying the selected value code pattern next to the dropdown box
-            if (mouzaName === "mouza" || mouzaName === "") {
-                const visibleSpans = document.querySelectorAll('span, div');
-                for (let span of visibleSpans) {
-                    let val = span.innerText ? span.innerText.trim() : "";
-                    if (val.includes('-') && (val.includes('মাধবপুর') || /^\d+\s*-/.test(val))) {
-                        mouzaName = val;
-                        break;
-                    }
-                }
-            }
-
-            // Cleanup filename format safely to keep Bengali text, numbers, and underscores
-            mouzaName = mouzaName.replace(/[\s\-]+/g, '_').replace(/[^a-zA-Z0-9_\u0980-\u09FF]/g, '');
-            if (!mouzaName) mouzaName = "mouza";
-
-            const sheetNo = record && record.SHEET_NO ? record.SHEET_NO : '1';
-            const fileName = `CyberSH_${mouzaName}_sit_${sheetNo}.jpg`;
 
             const blob = await imgRes.blob();
             const blobUrl = window.URL.createObjectURL(blob);
