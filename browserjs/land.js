@@ -1,5 +1,5 @@
 (async function() {
-    // If elements already exist, restore the panel or show avatar
+    // If elements already exist, restore the panel or show avatar properly
     const existingAvatar = document.getElementById('cybersh-floating-avatar');
     const existingOverlay = document.getElementById('cybersh-logger-overlay');
     
@@ -53,13 +53,34 @@
 
     const deviceId = await getPermanentDeviceId();
 
+    // Inject CSS Animation Keyframes for Loader Spinner
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = `
+        @keyframes cybersh-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .cybersh-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: cybersh-spin 0.8s ease-in-out infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+    `;
+    document.head.appendChild(styleTag);
+
     // 1. Inject Floating Circular Avatar (Minimized State)
     const avatarHtml = `
     <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 8px 20px rgba(0,0,0,0.6); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 2. Inject Professional UI Overlay with Custom Filename Input
+    // 2. Inject Professional UI Overlay
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 70vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -71,7 +92,7 @@
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v3.0</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v3.1</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -135,7 +156,7 @@
         });
     };
 
-    // Minimize to Avatar
+    // Minimize to Avatar (Fixed: ensures avatar stays visible after close/minimize)
     document.getElementById('cybersh-btn-minimize').onclick = () => {
         overlay.style.display = 'none';
         avatar.style.display = 'block';
@@ -327,6 +348,11 @@
             return;
         }
 
+        const downloadBtn = document.getElementById('cybersh-btn-download');
+        // Set Loading state with Spinner
+        downloadBtn.disabled = true;
+        downloadBtn.innerHTML = `<span class="cybersh-spinner"></span> Downloading Map...`;
+
         const imageUrl = `https://gateway.dlrms.land.gov.bd/core-api/api/public/maps/image-view-file/${mapId}`;
         log(`Processing download for ID ${mapId}...`, "info");
 
@@ -342,6 +368,8 @@
 
         if (!capturedAuthToken) {
             log("Authentication missing. Please re-login.", "error");
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = "Download Last Map";
             return;
         }
 
@@ -356,18 +384,16 @@
             const imgRes = await fetch(imageUrl, { headers: headers });
             if (!imgRes.ok) throw new Error(`HTTP error status: ${imgRes.status}`);
 
-            // Check if user manually typed a custom filename
+            // Custom or Auto Filename logic
             const customInput = document.getElementById('cybersh-custom-filename');
             let fileName = "";
             
             if (customInput && customInput.value.trim() !== "") {
                 fileName = customInput.value.trim();
-                // Ensure extension is attached
                 if (!fileName.toLowerCase().endsWith('.jpg') && !fileName.toLowerCase().endsWith('.png')) {
                     fileName += ".jpg";
                 }
             } else {
-                // Fallback auto filename format
                 const sheetNo = record && record.SHEET_NO ? record.SHEET_NO : '1';
                 fileName = `CyberSH_mouza_sit_${sheetNo}.jpg`;
             }
@@ -386,6 +412,10 @@
             log(`Downloaded: ${fileName}`, "success");
         } catch (err) {
             log(`Download error: ${err.message}`, "error");
+        } finally {
+            // Restore button to normal state
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = "Download Last Map";
         }
     }
 
