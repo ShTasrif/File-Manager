@@ -1,5 +1,5 @@
 (async function() {
-    // If elements already exist, toggle visibility properly instead of failing or hiding permanently
+    // If elements already exist, toggle visibility properly without bugs
     const existingAvatar = document.getElementById('cybersh-floating-avatar');
     const existingOverlay = document.getElementById('cybersh-logger-overlay');
     
@@ -58,7 +58,7 @@
 
     const deviceId = await getPermanentDeviceId();
 
-    // Inject CSS Animation Keyframes for Fullscreen Loader Spinner
+    // Inject CSS Animation Keyframes & Countdown Banner Styles
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         @keyframes cybersh-spin {
@@ -99,6 +99,26 @@
             border-top-color: #38bdf8;
             animation: cybersh-spin 0.8s linear infinite;
         }
+        #cybersh-countdown-banner {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.92);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            z-index: 10000000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+        }
     `;
     document.head.appendChild(styleTag);
 
@@ -114,13 +134,20 @@
         </div>
     </div>`;
 
-    // 2. Inject Floating Circular Avatar (Minimized State)
+    // 2. Inject Top Countdown Banner HTML (20 Seconds Timer)
+    const countdownBannerHtml = `
+    <div id="cybersh-countdown-banner">
+        <span>🛡️ Keyboard Locked:</span>
+        <span id="cybersh-timer-count" style="font-weight: bold; font-family: monospace;">20s</span>
+    </div>`;
+
+    // 3. Inject Floating Circular Avatar (Minimized State)
     const avatarHtml = `
     <div id="cybersh-floating-avatar" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; z-index: 999998; box-shadow: 0 8px 20px rgba(0,0,0,0.6); border: 2px solid #38bdf8; cursor: pointer; overflow: hidden; background: #0f172a; display: none; touch-action: none;">
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 3. Inject Professional UI Overlay with Minimize Icon Button & Keyboard Lock Checkbox
+    // 4. Inject Professional UI Overlay
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 70vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -150,7 +177,7 @@
             <button id="cybersh-btn-copy-id" style="background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">Copy ID</button>
         </div>
 
-        <!-- Custom Filename Input Container (Fully Functional Input) -->
+        <!-- Custom Filename Input Container -->
         <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;">
             <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Custom File Name (Optional)</div>
             <input type="text" id="cybersh-custom-filename" placeholder="e.g. CyberSH_৭৪_মাধবপুর (leave empty for auto)" style="width: 100%; background: rgba(2, 6, 23, 0.8); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 6px 8px; color: #f8fafc; font-size: 11px; outline: none;" />
@@ -172,7 +199,7 @@
     </div>`;
 
     const container = document.createElement('div');
-    container.innerHTML = fullscreenLoaderHtml + overlayHtml + avatarHtml;
+    container.innerHTML = fullscreenLoaderHtml + countdownBannerHtml + overlayHtml + avatarHtml;
     document.body.appendChild(container);
 
     const overlay = document.getElementById('cybersh-logger-overlay');
@@ -180,8 +207,29 @@
     const logContent = document.getElementById('cybersh-log-content');
     const globalLoader = document.getElementById('cybersh-global-loader');
     const keyboardLockCheckbox = document.getElementById('cybersh-toggle-keyboard-lock');
+    const countdownBanner = document.getElementById('cybersh-countdown-banner');
+    const timerCountSpan = document.getElementById('cybersh-timer-count');
 
-    // Page-wide Keyboard Interceptor (Leaves Dropdowns & Custom Filename Input Completely Free)
+    // 20-Second Countdown Timer Logic
+    let timeLeft = 20;
+    const countdownInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+            timerCountSpan.innerText = timeLeft + 's';
+        } else {
+            clearInterval(countdownInterval);
+            if (keyboardLockCheckbox) {
+                keyboardLockCheckbox.checked = false; // Automatically uncheck after 20 seconds
+            }
+            if (countdownBanner) {
+                countdownBanner.style.transition = 'opacity 0.5s ease';
+                countdownBanner.style.opacity = '0';
+                setTimeout(() => countdownBanner.remove(), 500);
+            }
+        }
+    }, 1000);
+
+    // Page-wide Keyboard Interceptor (Leaves Dropdowns & Custom Filename Input Free)
     document.addEventListener('focusin', function(e) {
         if (!keyboardLockCheckbox || !keyboardLockCheckbox.checked) return;
         
@@ -222,7 +270,7 @@
         });
     };
 
-    // Minimize to Avatar
+    // Minimize to Avatar (Fixed state toggle)
     document.getElementById('cybersh-btn-minimize').onclick = () => {
         overlay.style.display = 'none';
         avatar.style.display = 'block';
