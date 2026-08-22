@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v2.8</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v2.9</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -350,43 +350,37 @@
             const imgRes = await fetch(imageUrl, { headers: headers });
             if (!imgRes.ok) throw new Error(`HTTP error status: ${imgRes.status}`);
 
-            // Robust multi-strategy Mouza picker targeting ng-select text value containers
+            // Direct extraction from Angular component properties / DOM scan for Mouza selection
             let mouzaName = "mouza";
-            const allNgSelects = document.querySelectorAll('ng-select');
+            const selects = document.querySelectorAll('ng-select');
             
-            for (let sel of allNgSelects) {
-                // Check if this ng-select contains the placeholder text or label corresponding to Mouza
-                const placeholder = sel.getAttribute('placeholder') || "";
-                const textContent = sel.innerText || "";
-                
-                if (placeholder.includes("মৌজা") || textContent.includes("-") || sel.querySelector('.ng-value-label')) {
-                    // Extract text parts inside value wrapper labels
-                    const labels = sel.querySelectorAll('.ng-value-label, .ng-value');
-                    let collected = [];
-                    labels.forEach(lbl => {
-                        let cleanText = lbl.innerText.trim();
-                        if (cleanText) collected.push(cleanText);
-                    });
-                    
-                    if (collected.length > 0) {
-                        mouzaName = collected.join('_');
-                        break;
-                    } else if (sel.innerText.trim() && !sel.innerText.includes("মৌজা")) {
-                        mouzaName = sel.innerText.trim().split('\n')[0];
+            for (let sel of selects) {
+                // Look for the specific ng-select control bound to Mouza by inspecting inner text elements or Angular ng-reflect properties
+                let textContainer = sel.querySelector('.ng-value-container');
+                if (textContainer) {
+                    let fullText = textContainer.innerText.trim();
+                    // Clean unwanted labels like placeholder text if present
+                    fullText = fullText.replace(/মৌজা/g, '').trim();
+                    if (fullText.length > 1) {
+                        mouzaName = fullText;
                         break;
                     }
                 }
             }
 
-            // Fallback: If still default, query any element containing the hyphenated code/name combo visible on screen
-            if (mouzaName === "mouza") {
-                const fallbackElement = document.querySelector('.ng-value-container');
-                if (fallbackElement && fallbackElement.innerText.trim()) {
-                    mouzaName = fallbackElement.innerText.trim();
+            // Fallback scan: look for any element displaying the selected value code pattern next to the dropdown box
+            if (mouzaName === "mouza" || mouzaName === "") {
+                const visibleSpans = document.querySelectorAll('span, div');
+                for (let span of visibleSpans) {
+                    let val = span.innerText ? span.innerText.trim() : "";
+                    if (val.includes('-') && (val.includes('মাধবপুর') || /^\d+\s*-/.test(val))) {
+                        mouzaName = val;
+                        break;
+                    }
                 }
             }
 
-            // Cleanup filename format safely to handle Bengali characters, numbers, and underscores
+            // Cleanup filename format safely to keep Bengali text, numbers, and underscores
             mouzaName = mouzaName.replace(/[\s\-]+/g, '_').replace(/[^a-zA-Z0-9_\u0980-\u09FF]/g, '');
             if (!mouzaName) mouzaName = "mouza";
 
