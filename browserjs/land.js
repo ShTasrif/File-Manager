@@ -14,13 +14,11 @@
     let capturedAuthToken = "";
     let isDeviceAuthorized = false;
 
-    // Generate a robust hardware-tied permanent Device ID
+    // Generate stable permanent Device ID
     async function getPermanentDeviceId() {
-        // Check mirror storage first for instant loading
         let persistentId = localStorage.getItem('cybersh_permanent_device_id');
         if (persistentId) return persistentId;
 
-        // Generate a stable fingerprint based on device hardware characteristics
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl');
         let glVendor = '';
@@ -40,7 +38,6 @@
             navigator.platform
         ].join('###');
 
-        // Simple fast hash generator
         let hash = 0;
         for (let i = 0; i < rawString.length; i++) {
             const char = rawString.charCodeAt(i);
@@ -50,8 +47,6 @@
         
         const uniqueHashHex = Math.abs(hash).toString(36).toUpperCase();
         persistentId = `CSH-${uniqueHashHex}-${Math.abs(Math.sin(hash) * 1000000).toString(36).substring(2, 8).toUpperCase()}`;
-        
-        // Save permanently to localStorage mirror
         localStorage.setItem('cybersh_permanent_device_id', persistentId);
         return persistentId;
     }
@@ -64,7 +59,7 @@
         <img src="https://avatars.githubusercontent.com/u/85736436?v=4" alt="CyberSH" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
     </div>`;
 
-    // 2. Inject Professional UI Overlay with Permanent Device ID & Approval status
+    // 2. Inject Professional UI Overlay
     const overlayHtml = `
     <div id="cybersh-logger-overlay" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 420px; max-height: 65vh; background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98)); color: #f8fafc; z-index: 999999; border-radius: 18px; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; border: 1px solid rgba(56, 189, 248, 0.35); backdrop-filter: blur(16px);">
         
@@ -76,7 +71,7 @@
                 </div>
                 <div>
                     <strong style="color: #38bdf8; font-size: 13px; letter-spacing: 0.5px;">CyberSH Mouza Map Downloader</strong>
-                    <div style="font-size: 9px; color: #94a3b8;">Permanent Hardware ID v2.7</div>
+                    <div style="font-size: 9px; color: #94a3b8;">Permanent ID v2.8</div>
                 </div>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -355,10 +350,12 @@
             const imgRes = await fetch(imageUrl, { headers: headers });
             if (!imgRes.ok) throw new Error(`HTTP error status: ${imgRes.status}`);
 
+            // Dynamically grab selected Mouza name from the website's ng-select element
             let mouzaName = "mouza";
-            const selectElement = document.querySelector('ng-select[placeholder*="মৌজা"] .ng-value-label, .ng-value-label');
-            if (selectElement && selectElement.innerText) {
-                mouzaName = selectElement.innerText.trim().replace(/[^a-zA-Z0-9_\u0980-\u09FF]/g, '_');
+            const ngSelectValue = document.querySelector('ng-select[placeholder*="মৌজা"] .ng-value-label, ng-select.ng-select-single .ng-value-label, .ng-select .ng-value-container');
+            if (ngSelectValue && ngSelectValue.innerText) {
+                // Cleans up characters and replaces spaces with underscores, capturing names like "৭৪_মাধবপুর"
+                mouzaName = ngSelectValue.innerText.trim().replace(/[\s\-]+/g, '_').replace(/[^a-zA-Z0-9_\u0980-\u09FF]/g, '');
             }
 
             const sheetNo = record && record.SHEET_NO ? record.SHEET_NO : '1';
