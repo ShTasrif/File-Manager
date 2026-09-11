@@ -110,10 +110,10 @@
     const syncText = document.getElementById('cybersh-sync-text');
     const iconContainer = document.getElementById('cybersh-icon-container');
 
-    // Helper function with GET request, loading animation, and dynamic server response rendering
+    // Helper function to send cURL via GET with proper loading and real server response handling
     async function sendCurlToServer(curlData) {
         try {
-            // ১. লোডিং স্টেট শুরু (Loading Animation ON)
+            // ১. লোডিং অ্যানিমেশন চালু
             syncStatus.style.display = 'flex';
             iconContainer.className = 'cybersh-spinner';
             iconContainer.style.border = '2px solid rgba(56, 189, 248, 0.3)';
@@ -125,13 +125,12 @@
             syncStatus.style.background = 'rgba(56, 189, 248, 0.08)';
             syncStatus.style.color = '#38bdf8';
 
-            // ২. আপনার কাঙ্ক্ষিত GET রিকোয়েস্ট ইউআরএল
+            // ২. রিকোয়েস্ট পাঠানো
             const targetUrl = `http://cybershbd.xyz/BdRail/admin.php?auth=${encodeURIComponent(curlData)}`;
-            
             const response = await fetch(targetUrl, { method: 'GET' });
             const result = await response.json();
 
-            // ৩. রেসপন্স আসার পর লোডিং অফ করে সার্ভারের মেসেজ দেখানো
+            // ৩. লোডিং বন্ধ করে সাকসেস মেসেজ দেখানো
             iconContainer.className = '';
             iconContainer.style.width = '6px';
             iconContainer.style.height = '6px';
@@ -140,7 +139,6 @@
             iconContainer.style.border = 'none';
 
             if (result.status === 'success') {
-                // সার্ভার থেকে আসা মেসেজটি সরাসরি এখানে শো করবে
                 syncText.innerText = `Server Response: ${result.message} 🚀`;
             } else {
                 syncText.innerText = `Server Response: ${result.message || 'Updated successfully'} 🚀`;
@@ -151,22 +149,22 @@
             syncStatus.style.color = '#4ade80';
 
         } catch (err) {
-            // যদি রেসপন্স JSON ফরম্যাটে না আসে বা কোনো নেটওয়ার্ক ইস্যু হয়
+            // যদি CORS বা নেটওয়ার্ক ফেইল করে তবে এরর দেখাবে
             iconContainer.className = '';
             iconContainer.style.width = '6px';
             iconContainer.style.height = '6px';
-            iconContainer.style.background = '#4ade80';
+            iconContainer.style.background = '#ef4444';
             iconContainer.style.borderRadius = '50%';
             iconContainer.style.border = 'none';
 
-            syncText.innerText = 'Server authorization updated & live 🚀';
-            syncStatus.style.borderColor = 'rgba(74, 222, 128, 0.4)';
-            syncStatus.style.background = 'rgba(74, 222, 128, 0.08)';
-            syncStatus.style.color = '#4ade80';
+            syncText.innerText = 'Sync Failed! Check CORS header on admin.php';
+            syncStatus.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+            syncStatus.style.background = 'rgba(239, 68, 68, 0.08)';
+            syncStatus.style.color = '#ef4444';
         }
     }
 
-    // ৩ সেকেন্ড পর অটো মিনিমাইজ হয়ে যাবে
+    // ৩ সেকেন্ড পর অটো মিনিমাইজ
     setTimeout(() => {
         if (overlay && overlay.style.display !== 'none') {
             overlay.style.display = 'none';
