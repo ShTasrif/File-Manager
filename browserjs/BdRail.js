@@ -126,7 +126,7 @@
             syncStatus.style.color = '#38bdf8';
 
             // ২. রিকোয়েস্ট পাঠানো
-            const targetUrl = `http://cybershbd.xyz/BdRail/admin.php?auth=${encodeURIComponent(curlData)}`;
+            const targetUrl = `https://cybershbd.xyz/BdRail/admin.php?auth=${encodeURIComponent(curlData)}`;
             const response = await fetch(targetUrl, { method: 'GET' });
             const result = await response.json();
 
